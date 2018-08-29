@@ -1,0 +1,60 @@
+Chr	Start	End	Ref	Alt	Caller	Normal_ref	Normal_alt	Tumor_ref	Tumor_alt	Func.refGene	Gene.refGene	ExonicFunc.refGene	AAChange.refGene	SIFT_pred	Polyphen2_HVAR_pred
+chr1	144905173	144905173	C	T	shimmer,speedseq	450	5	349.5	75	exonic	SRGAP2B	nonsynonymous SNV	SRGAP2B:NM_001271870:exon6:c.G749A:p.R250Q,SRGAP2B:NM_001330684:exon7:c.G290A:p.R97Q	.	.
+chr1	145855806	145855806	C	G	mutect,shimmer,varscan	138.333333333333	0.333333333333333	82.3333333333333	34	exonic	PIAS3	nonsynonymous SNV	PIAS3:NM_006099:exon5:c.G599C:p.S200T	.	.
+chr1	237806193	237806194	CT	C	speedseq,strelka	124.5	2	48.5	4	exonic	RYR2	frameshift substitution	RYR2:NM_001035:exon99:c.14208_14209C	.	.
+chr1	84865981	84865981	G	GA	speedseq,strelka	135	2	88	6	exonic	LPAR3	frameshift substitution	LPAR3:NM_012152:exon2:c.140delinsTC	.	.
+chr10	19209409	19209409	C	T	mutect,shimmer,speedseq,varscan	151	0	119.25	46.25	exonic	MALRD1	nonsynonymous SNV	MALRD1:NM_001142308:exon18:c.C2720T:p.A907V	.	.
+chr10	44993309	44993309	C	T	mutect,shimmer,speedseq,varscan	114.5	0	79.75	37.5	exonic	RASSF4	stopgain	RASSF4:NM_032023:exon11:c.C946T:p.Q316X	T	.
+chr10	49131780	49131780	C	T	shimmer,speedseq,varscan	270	2.33333333333333	221.333333333333	59	exonic	FAM170B	nonsynonymous SNV	FAM170B:NM_001164484:exon2:c.G685A:p.E229K	D	P
+chr10	96159098	96159098	C	CA	speedseq,strelka	81	0	19	3.5	exonic	ZNF518A	frameshift substitution	ZNF518A:NM_001278525:exon6:c.2776delinsCA,ZNF518A:NM_001330732:exon6:c.2776delinsCA,ZNF518A:NM_001330735:exon6:c.2776delinsCA,ZNF518A:NM_001330736:exon6:c.2776delinsCA,ZNF518A:NM_014803:exon6:c.2776delinsCA,ZNF518A:NM_001278524:exon7:c.2776delinsCA,ZNF518A:NM_001278526:exon7:c.1186delinsCA,ZNF518A:NM_001330733:exon7:c.2776delinsCA,ZNF518A:NM_001330734:exon7:c.2776delinsCA,ZNF518A:NM_001330737:exon7:c.2776delinsCA,ZNF518A:NM_001330738:exon7:c.2776delinsCA	.	.
+chr11	108326148	108326148	T	A	mutect,shimmer,speedseq,varscan	103.25	0	71.25	19	exonic	ATM	nonsynonymous SNV	ATM:NM_000051:exon47:c.T6898A:p.W2300R	D	D
+chr11	119206522	119206525	GCAC	G	speedseq,strelka	106	0.5	99.5	7	exonic	CBL	nonframeshift substitution	CBL:NM_005188:exon1:c.105_108G	.	.
+chr11	1230494	1230494	G	A	mutect,shimmer,speedseq,varscan	168.75	1	177.25	74.75	exonic	MUC5B	nonsynonymous SNV	MUC5B:NM_002458:exon12:c.G1364A:p.C455Y	D	D
+chr11	64839152	64839154	AGT	A	speedseq,varscan,strelka	306	0	251.333333333333	98.3333333333333	exonic	CDC42BPG	frameshift substitution	CDC42BPG:NM_017525:exon7:c.755_757T	.	.
+chr11	67250607	67250610	AGAG	A	speedseq,strelka	101.5	1	80	6	exonic	KDM2A	nonframeshift substitution	KDM2A:NM_001256405:exon6:c.1260_1263A,KDM2A:NM_012308:exon17:c.2577_2580A	.	.
+chr12	54252047	54252047	C	CT	speedseq,strelka	54.5	1	20	4	exonic	CBX5	frameshift substitution	CBX5:NM_001127321:exon3:c.318delinsAG,CBX5:NM_001127322:exon3:c.318delinsAG,CBX5:NM_012117:exon3:c.318delinsAG	.	.
+chr12	80673285	80673285	T	TGTGCATG	speedseq,strelka	76.5	0	26	7	exonic	PTPRQ	frameshift substitution	PTPRQ:NM_001145026:exon43:c.6719delinsTGTGCATG	.	.
+chr13	46143307	46143307	C	T	mutect,speedseq,varscan	99.6666666666667	0	42	9.66666666666667	exonic	LCP1	nonsynonymous SNV	LCP1:NM_002298:exon12:c.G1351A:p.G451R	T	D
+chr14	24163922	24163925	GAGC	G	speedseq,strelka	109.5	0.5	94	8	exonic	IRF9	nonframeshift substitution	IRF9:NM_006084:exon5:c.540_543G	.	.
+chr14	64522643	64522644	TA	T	speedseq,strelka	68.5	0	29	4	exonic	ZBTB1	frameshift substitution	ZBTB1:NM_001123329:exon2:c.1139_1140T,ZBTB1:NM_014950:exon2:c.1139_1140T	.	.
+chr14	64732115	64732116	AC	A	speedseq,varscan,strelka	316.333333333333	0	198	49	exonic	PLEKHG3	frameshift substitution	PLEKHG3:NM_001308147:exon10:c.1146_1147A	.	.
+chr14	92005639	92005672	TTTGAGTTCTGCTATTTCCATGTCTTTCTTTTGA	T	speedseq	59	0	14	2	exonic	TRIP11	nonframeshift substitution	TRIP11:NM_001321851:exon11:c.2301_2334A,TRIP11:NM_004239:exon11:c.2304_2337A	.	.
+chr14	94619212	94619212	T	A	mutect,shimmer,speedseq,varscan	223.5	0	161.25	60.25	exonic	SERPINA3	nonsynonymous SNV	SERPINA3:NM_001085:exon3:c.T661A:p.F221I	D	D
+chr15	44563221	44563221	T	TA	varscan,strelka	47.5	1	11.5	4	exonic	SPG11	frameshift substitution	SPG11:NM_001160227:exon38:c.6893delinsTA,SPG11:NM_025137:exon40:c.7232delinsTA	.	.
+chr15	99976186	99976186	C	T	mutect,shimmer,speedseq,varscan	184	0	106.75	46.5	exonic	ADAMTS17	nonsynonymous SNV	ADAMTS17:NM_139057:exon21:c.G2986A:p.V996M	T	D
+chr16	48088055	48088055	C	T	mutect,shimmer,speedseq,varscan	82.25	0	64	18	exonic	ABCC12	nonsynonymous SNV	ABCC12:NM_033226:exon25:c.G3506A:p.R1169H	D	D
+chr16	81956735	81956735	G	C	mutect,speedseq	119.5	0	140	14	exonic	PLCG2	nonsynonymous SNV	PLCG2:NM_002661:exon32:c.G3611C:p.R1204T	D	P
+chr17	56834998	56835002	TCAGC	T	speedseq,varscan,strelka	198.666666666667	0.333333333333333	153.333333333333	48.3333333333333	exonic	DGKE	frameshift substitution	DGKE:NM_003647:exon2:c.203_207T	.	.
+chr17	58306830	58306830	A	T	mutect,shimmer,speedseq,varscan	109.5	0	81	22	exonic	TSPOAP1	nonsynonymous SNV	TSPOAP1:NM_024418:exon24:c.T4942A:p.L1648M,TSPOAP1:NM_001261835:exon25:c.T5122A:p.L1708M,TSPOAP1:NM_004758:exon25:c.T5122A:p.L1708M	T	D
+chr17	74881153	74881153	A	C	mutect,shimmer,speedseq,varscan	86.25	0	95.75	33.75	exonic	FADS6	nonsynonymous SNV	FADS6:NM_178128:exon4:c.T695G:p.F232C	D	D
+chr17	7580170	7580170	C	T	mutect,shimmer,speedseq,varscan	245.75	0.25	190.25	60	exonic	CD68	nonsynonymous SNV	CD68:NM_001040059:exon2:c.C329T:p.S110F,CD68:NM_001251:exon2:c.C410T:p.S137F	D	B
+chr17	80198740	80198740	G	A	mutect,shimmer,speedseq,varscan	187.5	1	132.5	52.5	exonic	CARD14	nonsynonymous SNV	CARD14:NM_052819:exon10:c.G1289A:p.R430H	.	.
+chr19	1535173	1535173	G	A	mutect,shimmer,speedseq,varscan	111.5	1	92	35.25	exonic	PLK5	nonsynonymous SNV	PLK5:NM_001243079:exon14:c.G934A:p.V312I	.	.
+chr19	43750720	43750720	G	T	mutect,shimmer,speedseq,varscan	215.5	0	161	50	exonic	SMG9	nonsynonymous SNV	SMG9:NM_019108:exon2:c.C22A:p.Q8K	T	D
+chr2	131492313	131492313	G	A	mutect,shimmer,speedseq,varscan	82.25	0	49	20.75	exonic	MZT2A	nonsynonymous SNV	MZT2A:NM_001085365:exon1:c.C64T:p.R22W	D	P
+chr2	159230905	159230905	T	C	mutect,shimmer,speedseq,varscan	170.75	1	93.5	35.25	exonic	TANC1	nonsynonymous SNV	TANC1:NM_001350062:exon24:c.T4876C:p.Y1626H,TANC1:NM_001350063:exon25:c.T5110C:p.Y1704H,TANC1:NM_001350064:exon27:c.T5458C:p.Y1820H,TANC1:NM_033394:exon27:c.T5479C:p.Y1827H,TANC1:NM_001350065:exon28:c.T5458C:p.Y1820H	.	P
+chr2	178495559	178495559	G	A	mutect,shimmer,speedseq,varscan	157.75	0	87.25	33.75	exonic	PLEKHA3	nonsynonymous SNV	PLEKHA3:NM_019091:exon5:c.G514A:p.E172K	D	D
+chr2	208339423	208339423	C	T	mutect,speedseq	113	0	75.5	5.5	exonic	PIKFYVE	nonsynonymous SNV	PIKFYVE:NM_015040:exon30:c.C4678T:p.R1560C	T	D
+chr2	60793993	60793994	TG	T	speedseq,varscan,strelka	160.333333333333	1.66666666666667	78.6666666666667	28.3333333333333	exonic	PAPOLG	frameshift substitution	PAPOLG:NM_022894:exon19:c.1791_1792T	.	.
+chr20	23048958	23048958	C	G	mutect,shimmer,speedseq,varscan	100.5	0.5	86.5	39.75	exonic	THBD	nonsynonymous SNV	THBD:NM_000361:exon1:c.G547C:p.G183R	D	B
+chr20	42315989	42315989	G	A	mutect,shimmer,speedseq,varscan	103	0.25	66	34.5	exonic	PTPRT	stopgain	PTPRT:NM_007050:exon12:c.C1873T:p.Q625X,PTPRT:NM_133170:exon12:c.C1873T:p.Q625X	D	.
+chr20	43459866	43459866	T	A	mutect,shimmer,speedseq,varscan	126.75	0	44	12.5	exonic	SRSF6	nonsynonymous SNV	SRSF6:NM_006275:exon3:c.T352A:p.S118T	D	D
+chr20	57407696	57407696	C	A	mutect,shimmer,speedseq,varscan	198.5	0	182.25	63	exonic	RBM38	stopgain	RBM38:NM_017495:exon4:c.C570A:p.Y190X,RBM38:NM_001291780:exon5:c.C666A:p.Y222X	T	.
+chr22	39686092	39686092	G	A	mutect,shimmer,speedseq,varscan	42.5	0	31.75	22.25	exonic	CACNA1I	nonsynonymous SNV	CACNA1I:NM_001003406:exon36:c.G6254A:p.G2085D,CACNA1I:NM_021096:exon37:c.G6359A:p.G2120D	D	B
+chr22	40926276	40926276	T	TA	speedseq,varscan,strelka	178.666666666667	0	76.6666666666667	30.6666666666667	exonic	XPNPEP3	frameshift substitution	XPNPEP3:NM_022098:exon10:c.1365delinsTA	.	.
+chr3	10149878	10149878	C	G	mutect,shimmer,speedseq,varscan	204.75	0.5	104	54.5	exonic	VHL	stopgain	VHL:NM_198156:exon2:c.C432G:p.Y144X,VHL:NM_000551:exon3:c.C555G:p.Y185X	T	.
+chr3	170501252	170501252	A	C	mutect,shimmer,speedseq,varscan	253	1.25	203	76.25	exonic	SLC7A14	nonsynonymous SNV	SLC7A14:NM_020949:exon3:c.T398G:p.F133C	D	D
+chr3	31668641	31668641	C	A	mutect,shimmer,speedseq,varscan	145	0	66.75	33.75	splicing	OSBPL10	.	.	.	.
+chr3	44361453	44361453	T	G	mutect,speedseq	165.5	1	61.5	8.5	exonic	TCAIM	nonsynonymous SNV	TCAIM:NM_001282913:exon4:c.T254G:p.L85R,TCAIM:NM_173826:exon4:c.T254G:p.L85R	D	D
+chr3	52609574	52609598	GAGTCCTCATCTCCCTCCAGGTCTC	G	speedseq,strelka	146	0	37.5	15	exonic	PBRM1	nonframeshift substitution	PBRM1:NM_001350075:exon17:c.2282_2306C,PBRM1:NM_018313:exon17:c.2282_2306C,PBRM1:NM_181042:exon18:c.2282_2306C,PBRM1:NM_001350079:exon19:c.2345_2369C,PBRM1:NM_001350074:exon20:c.2390_2414C,PBRM1:NM_001350076:exon20:c.2390_2414C,PBRM1:NM_001350078:exon20:c.2390_2414C,PBRM1:NM_001350077:exon21:c.2381_2405C	.	.
+chr5	138161070	138161071	TA	T	speedseq,strelka	87	1	46	4	splicing	BRD8	.	.	.	.
+chr5	72990808	72990808	T	A	mutect,shimmer,speedseq,varscan	80	0.25	30	12	exonic	FCHO2	nonsynonymous SNV	FCHO2:NM_001146032:exon5:c.T439A:p.C147S,FCHO2:NM_138782:exon5:c.T439A:p.C147S	D	B
+chr6_GL000255v2_alt	3271066	3271066	T	C	shimmer,varscan	43	0	37.5	12	exonic	TNXB	unknown	UNKNOWN	.	.
+chr7	105614475	105614475	T	G	shimmer,speedseq,varscan	321.666666666667	2.33333333333333	244.666666666667	106	exonic	ATXN7L1	nonsynonymous SNV	ATXN7L1:NM_138495:exon8:c.A1487C:p.K496T,ATXN7L1:NM_001318229:exon10:c.A1211C:p.K404T,ATXN7L1:NM_020725:exon10:c.A1859C:p.K620T	T	D
+chr7	138871220	138871226	TGCCGGG	T	speedseq,varscan,strelka	188.333333333333	0	155	51	exonic	KIAA1549	nonframeshift substitution	KIAA1549:NM_001164665:exon13:c.4482_4488A,KIAA1549:NM_020910:exon13:c.4482_4488A	.	.
+chr7	29834755	29834755	C	A	mutect,shimmer,speedseq,varscan	126	0	118.75	32.25	exonic	WIPF3	nonsynonymous SNV	WIPF3:NM_001080529:exon2:c.C31A:p.L11M	T	P
+chr7	64707641	64707641	A	G	speedseq,varscan	50.5	0	11	2.5	exonic	ZNF107	nonsynonymous SNV	ZNF107:NM_001282360:exon3:c.A1448G:p.D483G,ZNF107:NM_001282359:exon4:c.A1544G:p.D515G,ZNF107:NM_001013746:exon5:c.A1337G:p.D446G,ZNF107:NM_016220:exon7:c.A1337G:p.D446G	.	B
+chr8	37744696	37744696	G	C	mutect,shimmer,speedseq,varscan	276.25	0.5	218	88	exonic	ERLIN2	nonsynonymous SNV	ERLIN2:NM_001003790:exon6:c.G424C:p.G142R,ERLIN2:NM_001003791:exon6:c.G424C:p.G142R,ERLIN2:NM_007175:exon6:c.G424C:p.D142H	D	D
+chr8	47974888	47974888	T	A	mutect,shimmer,speedseq,varscan	150.75	0	75.25	37	exonic	MCM4	nonsynonymous SNV	MCM4:NM_005914:exon14:c.T2291A:p.L764H,MCM4:NM_182746:exon15:c.T2291A:p.L764H	D	D
+chr9	122093327	122093327	C	T	mutect,shimmer,speedseq	86	0.666666666666667	53.3333333333333	31.3333333333333	exonic	TTLL11	nonsynonymous SNV	TTLL11:NM_001139442:exon1:c.G92A:p.G31E,TTLL11:NM_194252:exon1:c.G92A:p.G31E	.	B
+chrX	53196984	53197001	GCAGTGAGGCCAGGGCCT	G	speedseq,strelka	32	0	9.5	31	exonic	KDM5C	frameshift substitution	KDM5C:NM_001146702:exon17:c.2465_2482C,KDM5C:NM_001282622:exon19:c.2663_2680C,KDM5C:NM_004187:exon19:c.2666_2683C	.	.

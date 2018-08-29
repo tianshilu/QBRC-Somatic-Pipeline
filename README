@@ -1,0 +1,7 @@
+somatic.pl: pipeline for somatic and germline mutation calling (for each sample)
+job_somatic.pl: biohpc submission wrapper for somatic.pl (for a batch of samples)
+filter.R: post-processing script for somatic mutations (for a batch of samples)
+
+cnv.pl: pipeline for somatic CNV calling and quality check (for each sample)
+job_cnv.pl: biohpc submission wrapper for cnv.pl (for a batch of samples)
+summarize_cnv.R: summarizing script for CNV and quality check callings (for a batch of samples)

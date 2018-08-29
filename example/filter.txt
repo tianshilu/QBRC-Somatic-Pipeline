@@ -1,0 +1,16 @@
+sample_id	patient_id	folder
+CC-UT-172M1	CC-UT-172	/project/bioinformatics/Xiao_lab/shared/neoantigen/data/somatic/exome_seq/CC-UT-172M1
+CC-UT-172M	CC-UT-172	/project/bioinformatics/Xiao_lab/shared/neoantigen/data/somatic/exome_seq/CC-UT-172M
+CC-UT-169M	CC-UT-169	/project/bioinformatics/Xiao_lab/shared/neoantigen/data/somatic/exome_seq/CC-UT-169M
+CC-UT-168T	CC-UT-168	/project/bioinformatics/Xiao_lab/shared/neoantigen/data/somatic/exome_seq/CC-UT-168T
+CC-UT-167T	CC-UT-167	/project/bioinformatics/Xiao_lab/shared/neoantigen/data/somatic/exome_seq/CC-UT-167T
+CC-UT-165T	CC-UT-165	/project/bioinformatics/Xiao_lab/shared/neoantigen/data/somatic/exome_seq/CC-UT-165T
+CC-UT-161T	CC-UT-161	/project/bioinformatics/Xiao_lab/shared/neoantigen/data/somatic/exome_seq/CC-UT-161T
+CC-UT-182M	CC-UT-182	/project/bioinformatics/Xiao_lab/shared/neoantigen/data/somatic/exome_seq/CC-UT-182M
+CC-UT-172T	CC-UT-172	/project/bioinformatics/Xiao_lab/shared/neoantigen/data/somatic/exome_seq/CC-UT-172T
+CC-UT-171T	CC-UT-171	/project/bioinformatics/Xiao_lab/shared/neoantigen/data/somatic/exome_seq/CC-UT-171T
+CC-UT-171M	CC-UT-171	/project/bioinformatics/Xiao_lab/shared/neoantigen/data/somatic/exome_seq/CC-UT-171M
+CC-UT-169T	CC-UT-169	/project/bioinformatics/Xiao_lab/shared/neoantigen/data/somatic/exome_seq/CC-UT-169T
+CC-UT-168M	CC-UT-168	/project/bioinformatics/Xiao_lab/shared/neoantigen/data/somatic/exome_seq/CC-UT-168M
+CC-UT-165M	CC-UT-165	/project/bioinformatics/Xiao_lab/shared/neoantigen/data/somatic/exome_seq/CC-UT-165M
+CC-UT-161M	CC-UT-161	/project/bioinformatics/Xiao_lab/shared/neoantigen/data/somatic/exome_seq/CC-UT-161M

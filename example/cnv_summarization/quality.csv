@@ -1,0 +1,16 @@
+"","Normal coverage","Tumor coverage","Tumor Quality 1","Tumor Quality 2","Normal Quality 1","Normal Quality 2"
+"CC-UT-161M",72x,89.6x,Pass,Pass,Pass,Pass
+"CC-UT-161T",72x,69.2x,Pass,Pass,Pass,Pass
+"CC-UT-165M",66.3x,80.7x,Pass,Pass,Pass,Pass
+"CC-UT-165T",66.3x,75x,Pass,Pass,Pass,Pass
+"CC-UT-167T",67.8x,66.6x,Pass,Pass,Pass,Pass
+"CC-UT-168M",70.6x,79.3x,Pass,Pass,Pass,Pass
+"CC-UT-168T",70.6x,71.4x,Pass,Pass,Pass,Pass
+"CC-UT-169M",81.3x,79.1x,Pass,Pass,Pass,Pass
+"CC-UT-169T",81.3x,84.4x,Pass,Pass,Pass,Pass
+"CC-UT-171M",83.1x,87.3x,Pass,Pass,Pass,Pass
+"CC-UT-171T",83.1x,78.9x,Pass,Pass,Pass,Pass
+"CC-UT-172M",69x,80.6x,Pass,Pass,Pass,Pass
+"CC-UT-172M1",69x,79x,Pass,Pass,Pass,Pass
+"CC-UT-172T",69x,70.6x,Pass,Pass,Pass,Pass
+"CC-UT-182M",77.3x,85x,Pass,Pass,Pass,Pass
