@@ -35,17 +35,17 @@ sequencing_file_3 \
 sequencing_file_4 \
 thread build index java17 /Directory/to/output pdx 
 
-Example:
+Example: \
 perl ~/somatic/somatic.pl ~/seq/1799-01N.R1.fastq.gz ~/seq/1799-01N.R2.fastq.gz ~/seq/1799-01T.R1.fastq.gz ~/seq/1799-01T.R2.fastq.gz 32 hg38 ~/ref/hg38/hs38d1.fa /cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java ~/somatic_result/1799-01/ human
 
 #### Note: 
-Input seuqencing files: (1) If input are fastq files, they must be 'gz' files. 'sequencing_file_1', 'sequencing_file_2' are path to fastq1 and fastq2 of normal sample; 'sequencing_file_3', 'sequencing_file_4' are path to fastq1 and fastq2 of tumor samples. (2) If input are bam files, use "bam /path/to/bam/files.bam" in replace of the tow corresponding fastq input files. (3) If input are RNA sequencing files, use "RNA:fastq1" or "RNA:bam" at the first or third slot. (4) If input are deep exome sequencing data, use "Deep:fastq1" at the first or third slot. (5) For tumor-only calling, put "NA NA" in the first two slots. Results will be written to *germline* output files. (6) Optional: run somatic_script/SurecallTrummer.jar on the fastq files before runnign somatic.pl for deep seuquencing files.
-"thread": number of threads to use. Recommended: 32
-"build": genome build, hg19 or hg38 or mm10.
-"index": path (including file names) to the reference genome.
-"java17": path (including the executable file name) to java 1.7 (needed only for MuTect).
-"ouput": the output folder, it will be deleted (if pre-existing) adn re-created during analysis.
-"pdx": "PDX" or "human" if this is PDX sample, reads will be aligned to mouse genome first. And unmapped reads will be mapped to the human genome.
+Input seuqencing files: (1) If input are fastq files, they must be 'gz' files. 'sequencing_file_1', 'sequencing_file_2' are path to fastq1 and fastq2 of normal sample; 'sequencing_file_3', 'sequencing_file_4' are path to fastq1 and fastq2 of tumor samples. (2) If input are bam files, use "bam /path/to/bam/files.bam" in replace of the tow corresponding fastq input files. (3) If input are RNA sequencing files, use "RNA:fastq1" or "RNA:bam" at the first or third slot. (4) If input are deep exome sequencing data, use "Deep:fastq1" at the first or third slot. (5) For tumor-only calling, put "NA NA" in the first two slots. Results will be written to *germline* output files. (6) Optional: run somatic_script/SurecallTrummer.jar on the fastq files before runnign somatic.pl for deep seuquencing files. \
+"thread": number of threads to use. Recommended: 32 \
+"build": genome build, hg19 or hg38 or mm10. \
+"index": path (including file names) to the reference genome. \
+"java17": path (including the executable file name) to java 1.7 (needed only for MuTect). \
+"ouput": the output folder, it will be deleted (if pre-existing) adn re-created during analysis. \
+"pdx": "PDX" or "human" if this is PDX sample, reads will be aligned to mouse genome first. And unmapped reads will be mapped to the human genome. 
 
 ## job_somatic.pl
 BioHPC submission wrapper for somatic.pl for a batch of sampels.
@@ -56,46 +56,46 @@ example_file \
 thread build index java17 n
 
 somatic_design.txt example:
-~/seq/1799-01N.R1.fastq.gz ~/seq/1799-01N.R2.fastq.gz ~/seq/1799-01T.R1.fastq.gz ~/seq/1799-01T.R2.fastq.gz ~/out/1799-01/
-~/seq/1799-02N.R1.fastq.gz ~/seq/1799-02N.R2.fastq.gz ~/seq/1799-02T.R1.fastq.gz ~/seq/1799-02T.R2.fastq.gz ~/out/1799-02/
-~/seq/1799-03N.R1.fastq.gz ~/seq/1799-03N.R2.fastq.gz ~/seq/1799-03T.R1.fastq.gz ~/seq/1799-03T.R2.fastq.gz ~/out/1799-03/
+~/seq/1799-01N.R1.fastq.gz ~/seq/1799-01N.R2.fastq.gz ~/seq/1799-01T.R1.fastq.gz ~/seq/1799-01T.R2.fastq.gz ~/out/1799-01/ \
+~/seq/1799-02N.R1.fastq.gz ~/seq/1799-02N.R2.fastq.gz ~/seq/1799-02T.R1.fastq.gz ~/seq/1799-02T.R2.fastq.gz ~/out/1799-02/ \
+~/seq/1799-03N.R1.fastq.gz ~/seq/1799-03N.R2.fastq.gz ~/seq/1799-03T.R1.fastq.gz ~/seq/1799-03T.R2.fastq.gz ~/out/1799-03/ \
 
-Command example: 
+Command example:  \
 perl ~/somatic/job_somatic.pl somatic_design.txt ~/somatic/example/example.sh 32 hg38 ~/ref/hg38/hs38d1.fa /cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java 2
 
 #### Note:
-"design.txt" is the batch job design file. It has 6 columns separated by '\t', the first four slots are fastq files or bam files for normal and tumor samples. The fifth is the output folder, and the last is "PDX" or "".
-"example_file" is the demo job submission shell script. A default one is in example/.
-"thread": number of threads to use. Recommended: 32
-"build": genome build, hg19 or hg38 or mm10.
-"index": path (including file names) to the reference genome.
-"java17": path (including the executable file name) to java 1.7 (needed only for MuTect).
-"n": bundle $n somatic calling job into one submission.
+"design.txt" is the batch job design file. It has 6 columns separated by '\t', the first four slots are fastq files or bam files for normal and tumor samples. The fifth is the output folder, and the last is "PDX" or "". \
+"example_file" is the demo job submission shell script. A default one is in example/. \
+"thread": number of threads to use. Recommended: 32 \
+"build": genome build, hg19 or hg38 or mm10. \
+"index": path (including file names) to the reference genome. \
+"java17": path (including the executable file name) to java 1.7 (needed only for MuTect). \
+"n": bundle $n somatic calling job into one submission. \
 
 ## filter.R
-Post-processing script for somatic mutations for a batch of sampels.
+Post-processing script for somatic mutations for a batch of sampels. \
 ### Command
 Rscript filter.R \
 design.txt \
 output build index VAF_cutoff filter \
 #### Note:
-"design.txt": tab-delimited file with three columns: sample_id, patient_id, output folder.
-"output": the output folder to place all filtering results.
-"build": the reference genome build, hg38, hg19 etc.
-"index": the path to the reference genome file.
-"VAF_cutoff": the minimum VAF of the mutations in the tumor sample (recommended: 0.001-0.05).
+"design.txt": tab-delimited file with three columns: sample_id, patient_id, output folder. \
+"output": the output folder to place all filtering results. \
+"build": the reference genome build, hg38, hg19 etc. \
+"index": the path to the reference genome file. \
+"VAF_cutoff": the minimum VAF of the mutations in the tumor sample (recommended: 0.001-0.05). \
 "filter": TRUE or FALSE. Whether to filter out extremely long genes in the list "TTN","KCNQ1OT1","MUC16","ANKRD20A9P","TSIX","SYNE1","ZBTB20","OBSCN", "SH3TC2","NEB","MUC19","MUC4","NEAT1","SYNE2","CCDC168","AAK1","HYDIN","RNF213","LOC100131257","FSIP2". These genes usually turn out ot have somatic muitations in any cohort of patients. Default is FALSE.
 
-filter_design.txt example:
-1799-01 pat-01 ~/filter/1799-01/
-1799-02 pat-02 ~/filter/1799-02/
-1799-03 pat-03 ~/filter/1799-03/
+filter_design.txt example: \
+1799-01 pat-01 ~/filter/1799-01/ \
+1799-02 pat-02 ~/filter/1799-02/ \
+1799-03 pat-03 ~/filter/1799-03/ \
 
-Command example:
-Rscript ~/somatic/filter.R filter_design.txt ~/filter/ hg38 ~/ref/hg38/hs38d1.fa 0.01 FALSE
+Command example: \
+Rscript ~/somatic/filter.R filter_design.txt ~/filter/ hg38 ~/ref/hg38/hs38d1.fa 0.01 FALSE \
 
 ## cnv.pl
-Pipeline for somatic copy number variation calling and quality check for each sample
+Pipeline for somatic copy number variation calling and quality check for each sample \
 ### Command 
 perl cnv.pl \
 sequencing_file_1 \
@@ -105,14 +105,14 @@ sequencing_file_4 \
 thread index somatic_mutation_result output \
 ##### Note:
 prerequisite in path: R; BWA; sambamba; perl (Parallel::ForkManager); samtools (version>=1.6); cnvkit; fastqc
-Input seuqencing files: (1) If input are fastq files, they must be 'gz' files. 'sequencing_file_1', 'sequencing_file_2' are path to fastq1 and fastq2 of normal sample; 'sequencing_file_3', 'sequencing_file_4' are path to fastq1 and fastq2 of tumor samples. (2) If input are bam files, use "bam /path/to/bam/files.bam" in replace of the tow corresponding fastq input files. 
-"thread": number of threads to use. Recommended: 32
-"index": the path to the reference genome file.
-"somatic_mutation_result": somatic mutation calling output file. THis is for adjusting CNV by somatic mutation VAF. Set to 1 to turn off this adjustment.
-"output":the output folder. it will be deleted (if pre-existing) adn re-created during analysis.
-The CNV calling needs at least 128GB of memory.
+Input seuqencing files: (1) If input are fastq files, they must be 'gz' files. 'sequencing_file_1', 'sequencing_file_2' are path to fastq1 and fastq2 of normal sample; 'sequencing_file_3', 'sequencing_file_4' are path to fastq1 and fastq2 of tumor samples. (2) If input are bam files, use "bam /path/to/bam/files.bam" in replace of the tow corresponding fastq input files. \
+"thread": number of threads to use. Recommended: 32 \
+"index": the path to the reference genome file. \
+"somatic_mutation_result": somatic mutation calling output file. THis is for adjusting CNV by somatic mutation VAF. Set to 1 to turn off this adjustment. \
+"output":the output folder. it will be deleted (if pre-existing) adn re-created during analysis. \
+The CNV calling needs at least 128GB of memory. \
 
-Example:
+Example: \
 perl ~/somatic/cnv.pl ~/seq/1799-01N.R1.fastq.gz ~/seq/1799-01N.R2.fastq.gz ~/seq/1799-01T.R1.fastq.gz ~/seq/1799-01T.R2.fastq.gz 32 ~/ref/hg38/hs38d1.fa ~/somatic_result/1799-01/somatic_mutation_hg38.txt ~/cnv_result/1799-01
 
 ## job_cnv.pl: 
@@ -122,24 +122,24 @@ perl job_cnv.pl \
 design.txt \
 example.sh thread index n
 
-cnv_design.txt example:
-~/seq/1799-01N.R1.fastq.gz ~/seq/1799-01N.R2.fastq.gz ~/seq/1799-01T.R1.fastq.gz ~/seq/1799-01T.R2.fastq.gz ~/somatic_result/1799-01/somatic_mutations_hg38.txt ~/cnv_result/1799-01/
-~/seq/1799-02N.R1.fastq.gz ~/seq/1799-02N.R2.fastq.gz ~/seq/1799-02T.R1.fastq.gz ~/seq/1799-02T.R2.fastq.gz ~/somatic_result/1799-02/somatic_mutations_hg38.txt ~/cnv_result/1799-02/
-~/seq/1799-03N.R1.fastq.gz ~/seq/1799-03N.R2.fastq.gz ~/seq/1799-03T.R1.fastq.gz ~/seq/1799-03T.R2.fastq.gz ~/somatic_result/1799-03/somatic_mutations_hg38.txt ~/cnv_result/1799-03/
+cnv_design.txt example: \
+~/seq/1799-01N.R1.fastq.gz ~/seq/1799-01N.R2.fastq.gz ~/seq/1799-01T.R1.fastq.gz ~/seq/1799-01T.R2.fastq.gz ~/somatic_result/1799-01/somatic_mutations_hg38.txt ~/cnv_result/1799-01/ \
+~/seq/1799-02N.R1.fastq.gz ~/seq/1799-02N.R2.fastq.gz ~/seq/1799-02T.R1.fastq.gz ~/seq/1799-02T.R2.fastq.gz ~/somatic_result/1799-02/somatic_mutations_hg38.txt ~/cnv_result/1799-02/ \
+~/seq/1799-03N.R1.fastq.gz ~/seq/1799-03N.R2.fastq.gz ~/seq/1799-03T.R1.fastq.gz ~/seq/1799-03T.R2.fastq.gz ~/somatic_result/1799-03/somatic_mutations_hg38.txt ~/cnv_result/1799-03/ \
 
-Command example:
-perl ~/somatic/job_cnv.pl cnv_design.txt ~/somatic/example/example.sh 32 ~/ref/hg38/hs38d1.fa 2
+Command example: \
+perl ~/somatic/job_cnv.pl cnv_design.txt ~/somatic/example/example.sh 32 ~/ref/hg38/hs38d1.fa 2 \
 
 ## summarize_cnv.R
 Summarizing script for CNV and quality check callings for a batch of samples.
 ### Command
 Rscript summarize_cnv.R design.txt output index
 
-cnv_sum_design.txt example:
-sample_id folder
-1799-01 ~/cnv_result/1799-01
-1799-02 ~/cnv_result/1799-02
-1799-03 ~/cnv_result/1799-03
+cnv_sum_design.txt example: \
+sample_id folder \
+1799-01 ~/cnv_result/1799-01 \
+1799-02 ~/cnv_result/1799-02 \
+1799-03 ~/cnv_result/1799-03 \
 
-Command example:
+Command example: \
 Rscript ~/somatic/summarize_cnv.R cnv_sum_design.txt ~/cnv_sum/ ~/ref/hg38/
