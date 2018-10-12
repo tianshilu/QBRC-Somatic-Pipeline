@@ -73,7 +73,7 @@ perl ~/somatic/job_somatic.pl somatic_design.txt ~/somatic/example/example.sh 32
 "n": bundle $n somatic calling job into one submission. 
 
 ## filter.R
-Post-processing script for somatic mutations for a batch of sampels. \
+Post-processing script for somatic mutations for a batch of sampels. 
 ### Command
 Rscript filter.R \
 design.txt \
