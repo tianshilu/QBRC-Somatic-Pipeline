@@ -58,7 +58,7 @@ thread build index java17 n
 somatic_design.txt example:
 ~/seq/1799-01N.R1.fastq.gz ~/seq/1799-01N.R2.fastq.gz ~/seq/1799-01T.R1.fastq.gz ~/seq/1799-01T.R2.fastq.gz ~/out/1799-01/ \
 ~/seq/1799-02N.R1.fastq.gz ~/seq/1799-02N.R2.fastq.gz ~/seq/1799-02T.R1.fastq.gz ~/seq/1799-02T.R2.fastq.gz ~/out/1799-02/ \
-~/seq/1799-03N.R1.fastq.gz ~/seq/1799-03N.R2.fastq.gz ~/seq/1799-03T.R1.fastq.gz ~/seq/1799-03T.R2.fastq.gz ~/out/1799-03/ \
+~/seq/1799-03N.R1.fastq.gz ~/seq/1799-03N.R2.fastq.gz ~/seq/1799-03T.R1.fastq.gz ~/seq/1799-03T.R2.fastq.gz ~/out/1799-03/ 
 
 Command example:  \
 perl ~/somatic/job_somatic.pl somatic_design.txt ~/somatic/example/example.sh 32 hg38 ~/ref/hg38/hs38d1.fa /cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java 2
@@ -70,14 +70,14 @@ perl ~/somatic/job_somatic.pl somatic_design.txt ~/somatic/example/example.sh 32
 "build": genome build, hg19 or hg38 or mm10. \
 "index": path (including file names) to the reference genome. \
 "java17": path (including the executable file name) to java 1.7 (needed only for MuTect). \
-"n": bundle $n somatic calling job into one submission. \
+"n": bundle $n somatic calling job into one submission. 
 
 ## filter.R
 Post-processing script for somatic mutations for a batch of sampels. \
 ### Command
 Rscript filter.R \
 design.txt \
-output build index VAF_cutoff filter \
+output build index VAF_cutoff filter 
 #### Note:
 "design.txt": tab-delimited file with three columns: sample_id, patient_id, output folder. \
 "output": the output folder to place all filtering results. \
@@ -89,20 +89,20 @@ output build index VAF_cutoff filter \
 filter_design.txt example: \
 1799-01 pat-01 ~/filter/1799-01/ \
 1799-02 pat-02 ~/filter/1799-02/ \
-1799-03 pat-03 ~/filter/1799-03/ \
+1799-03 pat-03 ~/filter/1799-03/ 
 
 Command example: \
-Rscript ~/somatic/filter.R filter_design.txt ~/filter/ hg38 ~/ref/hg38/hs38d1.fa 0.01 FALSE \
+Rscript ~/somatic/filter.R filter_design.txt ~/filter/ hg38 ~/ref/hg38/hs38d1.fa 0.01 FALSE 
 
 ## cnv.pl
-Pipeline for somatic copy number variation calling and quality check for each sample \
+Pipeline for somatic copy number variation calling and quality check for each sample 
 ### Command 
 perl cnv.pl \
 sequencing_file_1 \
 sequencing_file_2 \
 sequencing_file_3 \
 sequencing_file_4 \
-thread index somatic_mutation_result output \
+thread index somatic_mutation_result output 
 ##### Note:
 prerequisite in path: R; BWA; sambamba; perl (Parallel::ForkManager); samtools (version>=1.6); cnvkit; fastqc
 Input seuqencing files: (1) If input are fastq files, they must be 'gz' files. 'sequencing_file_1', 'sequencing_file_2' are path to fastq1 and fastq2 of normal sample; 'sequencing_file_3', 'sequencing_file_4' are path to fastq1 and fastq2 of tumor samples. (2) If input are bam files, use "bam /path/to/bam/files.bam" in replace of the tow corresponding fastq input files. \
@@ -110,7 +110,7 @@ Input seuqencing files: (1) If input are fastq files, they must be 'gz' files. '
 "index": the path to the reference genome file. \
 "somatic_mutation_result": somatic mutation calling output file. THis is for adjusting CNV by somatic mutation VAF. Set to 1 to turn off this adjustment. \
 "output":the output folder. it will be deleted (if pre-existing) adn re-created during analysis. \
-The CNV calling needs at least 128GB of memory. \
+The CNV calling needs at least 128GB of memory. 
 
 Example: \
 perl ~/somatic/cnv.pl ~/seq/1799-01N.R1.fastq.gz ~/seq/1799-01N.R2.fastq.gz ~/seq/1799-01T.R1.fastq.gz ~/seq/1799-01T.R2.fastq.gz 32 ~/ref/hg38/hs38d1.fa ~/somatic_result/1799-01/somatic_mutation_hg38.txt ~/cnv_result/1799-01
@@ -125,10 +125,10 @@ example.sh thread index n
 cnv_design.txt example: \
 ~/seq/1799-01N.R1.fastq.gz ~/seq/1799-01N.R2.fastq.gz ~/seq/1799-01T.R1.fastq.gz ~/seq/1799-01T.R2.fastq.gz ~/somatic_result/1799-01/somatic_mutations_hg38.txt ~/cnv_result/1799-01/ \
 ~/seq/1799-02N.R1.fastq.gz ~/seq/1799-02N.R2.fastq.gz ~/seq/1799-02T.R1.fastq.gz ~/seq/1799-02T.R2.fastq.gz ~/somatic_result/1799-02/somatic_mutations_hg38.txt ~/cnv_result/1799-02/ \
-~/seq/1799-03N.R1.fastq.gz ~/seq/1799-03N.R2.fastq.gz ~/seq/1799-03T.R1.fastq.gz ~/seq/1799-03T.R2.fastq.gz ~/somatic_result/1799-03/somatic_mutations_hg38.txt ~/cnv_result/1799-03/ \
+~/seq/1799-03N.R1.fastq.gz ~/seq/1799-03N.R2.fastq.gz ~/seq/1799-03T.R1.fastq.gz ~/seq/1799-03T.R2.fastq.gz ~/somatic_result/1799-03/somatic_mutations_hg38.txt ~/cnv_result/1799-03/ 
 
 Command example: \
-perl ~/somatic/job_cnv.pl cnv_design.txt ~/somatic/example/example.sh 32 ~/ref/hg38/hs38d1.fa 2 \
+perl ~/somatic/job_cnv.pl cnv_design.txt ~/somatic/example/example.sh 32 ~/ref/hg38/hs38d1.fa 2 
 
 ## summarize_cnv.R
 Summarizing script for CNV and quality check callings for a batch of samples.
@@ -139,7 +139,7 @@ cnv_sum_design.txt example: \
 sample_id folder \
 1799-01 ~/cnv_result/1799-01 \
 1799-02 ~/cnv_result/1799-02 \
-1799-03 ~/cnv_result/1799-03 \
+1799-03 ~/cnv_result/1799-03 
 
 Command example: \
 Rscript ~/somatic/summarize_cnv.R cnv_sum_design.txt ~/cnv_sum/ ~/ref/hg38/
