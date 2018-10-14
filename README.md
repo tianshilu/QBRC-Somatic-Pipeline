@@ -10,7 +10,7 @@ Please refer to our paper for more detail of somatic mutation calling pipeline:[
 BWA (version >=0.7.15); STAR (required if applied for RNA sequencing data); sambamba; speedseq; varscan, samtools (version >=1.6); shimmer; annovar (database downloaded in default folder: refGene,ljb26_all,cosmic70,esp6500siv2_all,exac03,1000g2015aug); python (version 2); strelka (version >=2.8.3, note: strelka is tuned to run exome sequencing or RNA sequencing); manta (version >=1.4.0); java (version 1.8); perl (Parallel::ForkManager); lofreq_star (version >=2.1.3, for tumor-only calling); bowtie2 (version>= 2.3.4.3, for Patient Derived Xenograft models)
 
 # Input files
-Input can be fastq files or bam files. Input can also be a mixture of fastq adn bam files.
+Input can be fastq files or bam files. Input can also be a mixture of fastq and bam files.
 
 # Main procedures:
 ## Genome Alignment
