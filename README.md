@@ -53,7 +53,7 @@ design.txt \
 example_file \
 thread build index java17 n
 
-somatic_design.txt example (columns seperated by tab):\
+somatic_design.txt example (5 columns; columns seperated by tab):\
 ~/seq/1799-01N.R1.fastq.gz ~/seq/1799-01N.R2.fastq.gz ~/seq/1799-01T.R1.fastq.gz ~/seq/1799-01T.R2.fastq.gz ~/out/1799-01/ \
 ~/seq/1799-02N.R1.fastq.gz ~/seq/1799-02N.R2.fastq.gz ~/seq/1799-02T.R1.fastq.gz ~/seq/1799-02T.R2.fastq.gz ~/out/1799-02/ \
 ~/seq/1799-03N.R1.fastq.gz ~/seq/1799-03N.R2.fastq.gz ~/seq/1799-03T.R1.fastq.gz ~/seq/1799-03T.R2.fastq.gz ~/out/1799-03/ 
@@ -84,7 +84,8 @@ output build index VAF_cutoff filter
 "VAF_cutoff": the minimum VAF of the mutations in the tumor sample (recommended: 0.001-0.05). \
 "filter": TRUE or FALSE. Whether to filter out extremely long genes in the list "TTN","KCNQ1OT1","MUC16","ANKRD20A9P","TSIX","SYNE1","ZBTB20","OBSCN", "SH3TC2","NEB","MUC19","MUC4","NEAT1","SYNE2","CCDC168","AAK1","HYDIN","RNF213","LOC100131257","FSIP2". These genes usually turn out ot have somatic muitations in any cohort of patients. Default is FALSE.
 
-filter_design.txt example (columns seperated by tab): \
+filter_design.txt example (3 columns; columns seperated by tab; header): \
+sample_id patient_id folder \
 1799-01 pat-01 ~/filter/1799-01/ \
 1799-02 pat-02 ~/filter/1799-02/ \
 1799-03 pat-03 ~/filter/1799-03/ 
@@ -120,7 +121,7 @@ perl job_cnv.pl \
 design.txt \
 example.sh thread index n
 
-cnv_design.txt example (columns seperated by tab): \
+cnv_design.txt example (6 columns; columns seperated by tab): \
 ~/seq/1799-01N.R1.fastq.gz ~/seq/1799-01N.R2.fastq.gz ~/seq/1799-01T.R1.fastq.gz ~/seq/1799-01T.R2.fastq.gz ~/somatic_result/1799-01/somatic_mutations_hg38.txt ~/cnv_result/1799-01/ \
 ~/seq/1799-02N.R1.fastq.gz ~/seq/1799-02N.R2.fastq.gz ~/seq/1799-02T.R1.fastq.gz ~/seq/1799-02T.R2.fastq.gz ~/somatic_result/1799-02/somatic_mutations_hg38.txt ~/cnv_result/1799-02/ \
 ~/seq/1799-03N.R1.fastq.gz ~/seq/1799-03N.R2.fastq.gz ~/seq/1799-03T.R1.fastq.gz ~/seq/1799-03T.R2.fastq.gz ~/somatic_result/1799-03/somatic_mutations_hg38.txt ~/cnv_result/1799-03/ 
@@ -133,7 +134,7 @@ Summarizing script for CNV and quality check callings for a batch of samples.
 ### Command
 Rscript summarize_cnv.R design.txt output index
 
-cnv_sum_design.txt example (columns seperated by tab): \
+cnv_sum_design.txt example (2 columns; columns seperated by tab; header): \
 sample_id folder \
 1799-01 ~/cnv_result/1799-01 \
 1799-02 ~/cnv_result/1799-02 \
