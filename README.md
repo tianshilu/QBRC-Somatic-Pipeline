@@ -106,7 +106,7 @@ cnv_design.txt example (6 columns; columns seperated by tab):
 ~/seq/1799-03N.R1.fastq.gz ~/seq/1799-03N.R2.fastq.gz ~/seq/1799-03T.R1.fastq.gz ~/seq/1799-03T.R2.fastq.gz ~/somatic_result/1799-03/somatic_mutations_hg38.txt ~/cnv_result/1799-03/
 ### Command example: 
 perl ~/somatic/job_cnv.pl cnv_design.txt ~/somatic/example/example.sh 32 ~/ref/hg38/hs38d1.fa 2
-summarize_cnv.R
+## summarize_cnv.R
 Summarizing script for CNV and quality check callings for a batch of samples.
 ### Command
 Rscript summarize_cnv.R design.txt output index
