@@ -8,7 +8,7 @@
 # Rscript, bwa (>=0.7.15), STAR (if using RNA-Seq data), sambamba, speedseq, varscan, samtools (>=1.6), shimmer
 # annovar (database downloaded in default folder: refGene,ljb26_all,cosmic70,esp6500siv2_all,exac03,1000g2015aug)
 # python (2), strelka (>=2.8.3, note: strelka is tuned to run exome-seq or RNA-seq), manta(>=1.4.0), java (1.8)
-# perl (need Parallel::ForkManager), lofreq_star (>=2.1.3, for tumor-only calling), bowtie2 (>=2.3.4.3, for PDX mode)
+# perl (need Parallel::ForkManager), lofreq_star (>=2.1.3), bowtie2 (>=2.3.4.3, for PDX mode)
 #
 # input format: 
 # fastq files: (1) fastq1 and fastq2 of normal sample, fastq1 and fastq2 of tumor sample (must be .gz)
@@ -43,10 +43,11 @@ my $read_ct_max=75000000; # put a cap on how many reads to use, for sake of memo
 my $read_ct=0;
 
 my $manta="";
-my @command_array=("fun_mutect();","fun_speed_var_shimmer();","fun_strelka();");
+my @command_array=("fun_mutect();","fun_speed_var_shimmer();","fun_strelka_lofreq();");
 my %vcfs=("passed.somatic.indels.vcf"=>"strelka","passed.somatic.snvs.vcf"=>"strelka","mutect.vcf"=>"mutect",
   "somatic_diffs.readct.vcf"=>"shimmer","speedseq2.vcf"=>"speedseq",
-  "varscan.indel.Somatic.hc.vcf"=>"varscan","varscan.snp.Somatic.hc.vcf"=>"varscan");
+  "varscan.indel.Somatic.hc.vcf"=>"varscan","varscan.snp.Somatic.hc.vcf"=>"varscan",
+  "lofreq_n.vcf"=>"lofreq","lofreq_t.vcf"=>"lofreq");
 my %fastq=("tumor"=>[$fastq1_tumor,$fastq2_tumor],"normal"=>[$fastq1_normal,$fastq2_normal]);
 
 ##############################  path of files  ###############################
@@ -133,7 +134,7 @@ if (${$fastq{"normal"}}[0] ne "NA")
 # left alignment
 if (${$fastq{"normal"}}[0] ne "NA")
 { 
-  $ppm=Parallel::ForkManager->new(7);
+  $ppm=Parallel::ForkManager->new(9);
   foreach (keys %vcfs)
   {
     $pid = $ppm -> start and next;
@@ -174,8 +175,7 @@ unlink($output."/germline_mutations.".$build."_multianno.txt");
 system("date");
 system("rm -f ".$output."/*out");
 system("rm -f ".$output."/*idx");
-system("rm -f ".$output."/varscan.*vcf");
-system("rm -f ".$output."/mutect.vcf");
+system("rm -f ".$output."/*vcf");
 system("rm -f ".$output."/speedseq*");
 system("rm -f ".$output."/som_counts*");
 system("rm -f ".$output."/passed_*");
@@ -264,7 +264,7 @@ sub alignment{
     }
 
     # PDX
-    if ($pdx eq "PDX")
+    if ($pdx=~/PDX/)
     {
        system_call("bowtie2 -N 1 --un-conc ".$type_output." -p ".$thread." -x ".$mouse_ref.
          " -1 ".${$fastq{$type}}[0]." -2 ".${$fastq{$type}}[1]." > /dev/null");
@@ -299,7 +299,7 @@ sub alignment{
     # mark duplicates
     if ($rna==0 || $rna==1)
     {
-      system_call("sambamba markdup -l 0 -r --overflow-list-size=400000 --io-buffer-size=256 -t ".$thread.
+      system_call("sambamba markdup -l 0 -r --overflow-list-size=400000 --io-buffer-size=1024 -t ".$thread.
         " --tmpdir ".$type_output."/tmp ".$type_output."/rgAdded.bam ".$type_output."/dupmark.bam");
     }else # SureSelect deep sequencing
     {
@@ -354,8 +354,9 @@ sub alignment{
 
     # further process bam files
     system_call("sambamba index -t ".$thread." ".$type_output."/".$type.".bam");    		
-    system_call("sambamba mpileup --tmpdir ".$type_output."/tmp -t ".$thread." --buffer-size=2048000000 ".		
-    $type_output."/".$type.".bam --samtools \"-C 50 -f ".$index."\" > ".$type_output."/".$type.".mpileup");		
+    #system_call("sambamba mpileup --tmpdir ".$type_output."/tmp -t ".$thread." --buffer-size=16000000000 ".		
+    #  $type_output."/".$type.".bam --samtools \"-C 50 -f ".$index."\" > ".$type_output."/".$type.".mpileup");		
+    system_call("samtools mpileup -d 5000 -I -f ".$index." ".$type_output."/".$type.".bam > ".$type_output."/".$type.".mpileup");
     if (-s $type_output."/".$type.".mpileup"<100000) {die "Error: mpileup has failed!\n";}		
 }		
 
@@ -383,7 +384,7 @@ sub fun_speed_var_shimmer{
     "/somatic_diffs.readct.vcf");
 }
 
-sub fun_strelka{
+sub fun_strelka_lofreq{
   system_call("rm -f -r ".$output."/manta");
   system_call("rm -f -r ".$output."/strelka");
 
@@ -404,6 +405,12 @@ sub fun_strelka{
   
   system_call("rm -f -r ".$output."/strelka");
   system_call("rm -f -r ".$output."/manta"); 
+
+  # run lofreq
+  system_call("lofreq call-parallel --pp-threads ".$thread." -s --sig 0.7 --bonf 1 -C 7 -f ".$index.
+    " -S ".$resource_dbsnp." --call-indels -l ".$index.".exon.bed -o ".$output."/lofreq_t.vcf ".$tumor_bam);
+  system_call("lofreq call-parallel --pp-threads ".$thread." -s --sig 1 --bonf 1 -C 7 -f ".$index.
+    " -S ".$resource_dbsnp." --call-indels -l ".$index.".exon.bed -o ".$output."/lofreq_n.vcf ".$normal_bam); 
 }
 
 sub unlink_file
@@ -429,4 +436,4 @@ sub system_call
 #/archive/BICF/shared/Kidney/exome/RAW/SAM19944142_1_2.gne.fastq.gz \
 #32 hg38 /home2/twang6/data/genomes/hg38/hs38d1.fa \
 #/cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java \
-#~/iproject/test/ PDX
+#~/iproject/test/ human
