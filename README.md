@@ -1,5 +1,5 @@
 # The QBRC somatic mutation calling pipeline
-!(https://github.com/Somatic-pipeline/Somatic-pipeline/blob/master/qbrc.jpeg)
+! [https://github.com/Somatic-pipeline/Somatic-pipeline/blob/master/qbrc.jpeg]
 ## Introduction
 The QBRC somatic mutation calling pipeline of Wang lab identifies somatic and germline variants within whole exome sequencing (WXS), RNA sequencing and deep sequencing data. Mutations are identified by comparing allele frequencies in normal and tumor samples, annotating each mutation, and aggregating mutations from multiple cases into one project file. The pipeline can be applied to fastq files or bam files for tumor tissue, normal tissue and patient derived xenografts.
 Please visit our website https://www.utsouthwestern.edu/labs/wang-tao/software/ and refer to our paper for more detail of the QBRC somatic mutation calling pipeline:["Neoantigen Clonal Balance Predicts Response to Checkpoint Inhibitor"](url pending). Please cite as ["Neoantigen Clonal Balance Predicts Response to Checkpoint Inhibitor"] (url pending).
