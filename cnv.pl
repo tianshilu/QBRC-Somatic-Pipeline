@@ -22,7 +22,7 @@ use File::Copy;
 use Parallel::ForkManager;
 
 my ($fastq1_normal,$fastq2_normal,$fastq1_tumor,$fastq2_tumor,$thread,$index,$somatic,$output)=@ARGV;
-my (%fastq,$path,$normal_bam,$tumor_bam,$type);
+my ($picard,%fastq,$path,$normal_bam,$tumor_bam,$type);
 my ($zcat,$bam2fastq,$pm,$ppm,$pid,$command,$normal_output,$tumor_output);
 
 ########################  prepare  ##########################
@@ -31,6 +31,7 @@ my ($zcat,$bam2fastq,$pm,$ppm,$pid,$command,$normal_output,$tumor_output);
 $path=abs_path($0);
 $path=~s/cnv\.pl//;
 $bam2fastq=$path."/somatic_script/bam2fastq.pl";
+$picard=$path."/somatic_script/picard.jar";
 
 $normal_output=$output."/normal";
 $tumor_output=$output."/tumor";
@@ -140,12 +141,15 @@ sub alignment{
     unlink_file($type_output."/alignment.bam");
 
     # markdup
-    system_call("sambamba markdup -l 9 -r --overflow-list-size=400000 --io-buffer-size=256 -t ".$thread.
-      " --tmpdir ".$type_output."/tmp ".$type_output."/sort.bam ".$type_output."/".$type.".bam");
+    #system_call("sambamba markdup -l 9 -r --overflow-list-size=400000 --io-buffer-size=1024 -t ".$thread.
+    #  " --tmpdir ".$type_output."/tmp ".$type_output."/sort.bam ".$type_output."/".$type.".bam");
+    system_call("java -jar ".$picard." MarkDuplicates INPUT=".$type_output."/sort.bam OUTPUT=".$type_output."/".$type.".bam ".
+        " CREATE_INDEX=true VALIDATION_STRINGENCY=STRICT REMOVE_SEQUENCING_DUPLICATES=true METRICS_FILE=".$type_output."/dupmark_metrics.txt");
+    system_call("rm -f -r ".$type_output."/dupmark_metrics.txt");
+    system_call("mv ".$type_output."/dupmark.bai ".$type_output."/dupmark.bam.bai");
     unlink_file($type_output."/sort.bam");
 
     # generate final bam and mpileup files
-    system_call("sambamba index -t ".$thread." ".$type_output."/".$type.".bam");
     system("rm -f -r ".$type_output."/tmp");
     system("rm -f -r ".$type_output."/sambamba_tmp");
     system("rm -f -r ".$type_output."/*bai");
