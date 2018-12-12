@@ -1,5 +1,5 @@
 # you may modify the following codes to suit some special needs
-# need the maftools, gplots and corrplot R packages
+# need the corrplot, NMF, maftools, gplots, ape, and phangorn R packages
 # best use R>=3.4.0
 
 # exclude TG/PDX samples from this analysis
@@ -27,13 +27,12 @@
 
 ######  setting up  ##########
 
-name_pkg <- c("corrplot","NMF","maftools","gplots")
-bool_nopkg <- !name_pkg %in% rownames(installed.packages())
-if(sum(bool_nopkg) > 0){
-  install.packages(name_pkg[bool_nopkg],repos="https://cloud.r-project.org")
-}
-invisible(lapply(name_pkg, library, character.only = T)) # load multiple packages
-
+library(corrplot)
+library(NMF)
+library(maftools)
+library(gplots)
+library(phangorn)
+library(ape) 
 options(scipen=999)
 
 args = commandArgs(trailingOnly=TRUE)
@@ -46,7 +45,7 @@ min_tumor_vaf=as.numeric(args[5])
 filter_long=args[6]=="TRUE"
 long_genes=c("TTN","KCNQ1OT1","MUC16","ANKRD20A9P","TSIX","SYNE1","ZBTB20","OBSCN",
   "SH3TC2","NEB","MUC19","MUC4","NEAT1","SYNE2","CCDC168","AAK1","HYDIN","RNF213",      
-  "LOC100131257","FSIP2")  
+  "LOC100131257","FSIP2","MUC5B")  
 
 design=read.table(design,stringsAsFactors = F,header=T)
 if (colnames(design)[1]!="sample_id") 
@@ -119,7 +118,7 @@ mutations$mutation=paste(mutations$Chr,mutations$Start,mutations$Ref,mutations$A
 tmp=mutations[,c("patient_id","mutation")]
 tmp=tmp[!duplicated(tmp),]
 tmp=table(tmp$mutation)
-artefact=tmp[tmp>max(length(unique(mutations$patient_id))*0.2,1)]
+artefact=tmp[tmp>max(length(unique(mutations$patient_id))*0.2,2)]
 cat(paste("Filtering ",round(sum(mutations$mutation %in% names(artefact))/dim(mutations)[1]*100),
           "% of mutations due to being exactly the same\n"))
 mutations=mutations[!mutations$mutation %in% names(artefact),]
@@ -172,7 +171,7 @@ for (i in 1:dim(mutations)[1])
 write.csv(sum_mut,file=paste(path,"/summary_mutations_details.csv",sep=""))
 write.csv(1*(sum_mut!=""),file=paste(path,"/summary_mutations.csv",sep=""))
 
-pdf(file=paste(path,"/mutations_heatmap.pdf",sep=""),width=8,height=20)
+pdf(file=paste(path,"/mutations_heatmap.pdf",sep=""),width=dim(sum_mut)[2]/2,height=dim(sum_mut)[1]/40)
 tmp=1-1*(sum_mut!="")
 tmp=tmp[apply(tmp,1,mean)<0.9,]
 tmp=tmp[order(apply(tmp,1,mean)),]
@@ -205,6 +204,70 @@ for (sample in unique(mutations$sample_id))
 }
 
 ##########  plotting  ###################
+
+# phylo tree
+pdf(file=paste(path,"/phylo_tree.pdf",sep=""),width=6,height=6)
+tmp=table(design$patient_id)
+phylo_tree_pats=names(tmp[tmp>=3])
+
+for (phylo_tree_pat in phylo_tree_pats)
+{
+  # extract mutation data
+  mutations_pat=mutations[mutations$patient_id==phylo_tree_pat,]
+  mutations_pat$vaf=mutations_pat$Tumor_alt/(mutations_pat$Tumor_alt+mutations_pat$Tumor_ref)
+  mutations_mat=matrix(0,ncol=length(unique(mutations_pat$mutation)),
+                       nrow=length(unique(mutations_pat$sample_id)))
+  colnames(mutations_mat)=unique(mutations_pat$mutation)
+  rownames(mutations_mat)=unique(mutations_pat$sample_id)
+  for (i in 1:dim(mutations_pat)[1]) 
+    {mutations_mat[mutations_pat$sample_id[i],mutations_pat$mutation[i]]=mutations_pat$vaf[i]}
+  
+  # transform
+  mutations_mat=rbind(mutations_mat[1,],mutations_mat)
+  rownames(mutations_mat)[1]="Normal"
+  mutations_mat[1,]=0
+  mutations_mat=t(mutations_mat)
+  
+  # plot
+  vaf=mutations_mat
+  thr = 0.05
+  vaf_bin <- vaf
+  vaf_bin[vaf>=thr] <- 1
+  vaf_bin[vaf<thr] <- 0
+  vaf_bin <- as.data.frame(vaf_bin)
+  phydat <- phyDat(vaf_bin,type="USER",levels=c(0,1))
+  partree <- pratchet(phydat,trace = F)
+  partree <- acctran(partree,phydat)
+  tree <- as.phylo(partree)
+  plot.phylo(tree,main=phylo_tree_pat,
+             type = "unrooted",direction = "rightwards",edge.width = 3,cex = 1.2)
+  # g_undir <- as.igraph(tree,directed = F)
+  # tips <- tree$tip.label
+  # node_name <- names(V(g_undir))
+  # 
+  # node <- seq_along(tips)
+  # normal <-  match(tips[match("Normal",tips)],names(V(g_undir)))
+  # subclone <- match(tips[-match("Normal",tips)],names(V(g_undir)))
+  # in_node <- (1:length(node_name))[-c(normal,subclone)]
+  # vpath <- sapply(subclone,function(x)get.shortest.paths(g_undir,normal,x)$vpath)
+  # 
+  # edge_list <- vector("list",length(vpath))
+  # for(i in seq_along(vpath)){
+  #   current_path <- as.numeric(vpath[[i]])
+  #   edge <- matrix(NA,nrow=length(current_path)-1,ncol=2)
+  #   for(j in 1:nrow(edge)){
+  #     edge[j,] <- current_path[c(j,j+1)]
+  #   }
+  #   edge_list[[i]] <- edge
+  # }
+  # edge <- unique(do.call(rbind,edge_list))
+  # g_dir <- graph.edgelist(edge,directed=T)
+  # vertex.attributes(g_dir)$name <- rep("",length(node_name))
+  # vertex.attributes(g_dir)$name[c(normal,subclone)] <- node_name[c(normal,subclone)]
+  # vertex.attributes(g_dir)$name[-c(normal,subclone)] <- node_name[-c(normal,subclone)]
+  # plot(g_dir, layout = layout.reingold.tilford(g_dir, root = normal))
+}
+dev.off()
 
 # get data into maf format
 laml=annovarToMaf(annovar=paste(path,"/all_mutations.txt",sep=""),refBuild)
