@@ -39,7 +39,7 @@ my ($resource_1000g,$resource_mills,$resource_dbsnp,$resource_cosmic,$normal_bam
 my ($strelka_exome,$zcat,$bam2fastq,$pm,$ppm,$pid,$command);
 my ($normal_output,$tumor_output,$mutect_tmp,$speed_tmp);
 
-my $read_ct_max=75000000; # put a cap on how many reads to use, for sake of memory
+my $read_ct_max=100000000; # put a cap on how many reads to use, for sake of memory
 my $read_ct=0;
 
 my $manta="";
@@ -299,8 +299,12 @@ sub alignment{
     # mark duplicates
     if ($rna==0 || $rna==1)
     {
-      system_call("sambamba markdup -l 0 -r --overflow-list-size=400000 --io-buffer-size=1024 -t ".$thread.
-        " --tmpdir ".$type_output."/tmp ".$type_output."/rgAdded.bam ".$type_output."/dupmark.bam");
+      #system_call("sambamba markdup -l 0 -r --overflow-list-size=400000 --io-buffer-size=1024 -t ".$thread.
+      #  " --tmpdir ".$type_output."/tmp ".$type_output."/rgAdded.bam ".$type_output."/dupmark.bam");
+      system_call("java -jar ".$picard." MarkDuplicates INPUT=".$type_output."/rgAdded.bam OUTPUT=".$type_output."/dupmark.bam ".
+        " CREATE_INDEX=true VALIDATION_STRINGENCY=STRICT REMOVE_SEQUENCING_DUPLICATES=true METRICS_FILE=".$type_output."/dupmark_metrics.txt");
+      system_call("rm -f -r ".$type_output."/dupmark_metrics.txt");
+      system_call("mv ".$type_output."/dupmark.bai ".$type_output."/dupmark.bam.bai");
     }else # SureSelect deep sequencing
     {
       system_call("samtools view -H ".$type_output."/rgAdded.bam > ".$type_output."/header.sam");
