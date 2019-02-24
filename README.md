@@ -42,10 +42,10 @@ perl /Directory/to/folder/of/code/job_somatic.pl
 design.txt 
 example_file 
 thread build index java17 n\
-somatic_design.txt example (5 columns; columns seperated by tab):n\
-~/seq/1799-01N.R1.fastq.gz ~/seq/1799-01N.R2.fastq.gz ~/seq/1799-01T.R1.fastq.gz ~/seq/1799-01T.R2.fastq.gz ~/out/1799-01/ human n\
-~/seq/1799-02N.R1.fastq.gz ~/seq/1799-02N.R2.fastq.gz ~/seq/1799-02T.R1.fastq.gz ~/seq/1799-02T.R2.fastq.gz ~/out/1799-02/ human n\
-~/seq/1799-03N.R1.fastq.gz ~/seq/1799-03N.R2.fastq.gz ~/seq/1799-03T.R1.fastq.gz ~/seq/1799-03T.R2.fastq.gz ~/out/1799-03/ human n\
+somatic_design.txt example (5 columns; columns seperated by tab):\
+~/seq/1799-01N.R1.fastq.gz ~/seq/1799-01N.R2.fastq.gz ~/seq/1799-01T.R1.fastq.gz ~/seq/1799-01T.R2.fastq.gz ~/out/1799-01/ human \
+~/seq/1799-02N.R1.fastq.gz ~/seq/1799-02N.R2.fastq.gz ~/seq/1799-02T.R1.fastq.gz ~/seq/1799-02T.R2.fastq.gz ~/out/1799-02/ human \
+~/seq/1799-03N.R1.fastq.gz ~/seq/1799-03N.R2.fastq.gz ~/seq/1799-03T.R1.fastq.gz ~/seq/1799-03T.R2.fastq.gz ~/out/1799-03/ human \
 ### Command example:  
 perl ~/somatic/job_somatic.pl somatic_design.txt ~/somatic/example/example.sh 32 hg38 ~/ref/hg38/hs38d1.fa /cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java 2
 ### Note:
