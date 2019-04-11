@@ -2,8 +2,8 @@
 ![preview](https://github.com/Somatic-pipeline/Somatic-pipeline/blob/master/qbrc.jpeg)
 ## Introduction
 The QBRC mutation calling pipeline is a flexible and comprehensive pipeline for mutation calling that has glued together a lot of commonly used software and data processing steps for mutation calling. The mutation calling software include: sambamba, speedseq, varscan, shimmer, strelka, manta, lofreq_tar. It identifies somatic and germline variants from whole exome sequencing (WXS), RNA sequencing and deep sequencing data. It can be used for human, PDX, and mouse data (fastq files or bam files as input). Please refer to https://qbrc.swmed.edu/labs/wanglab/index.php for more information. If you used our pipeline in your publication, please cite our paper ["Neoantigen Clonal Balance Predicts Response to Checkpoint Inhibitor"] (under review).
-## Dependencies
-BWA (version >=0.7.15); STAR (required if applied for RNA sequencing data); sambamba; speedseq; varscan, samtools (version >=1.6); shimmer; annovar (database downloaded in default folder: refGene,ljb26_all,cosmic70,esp6500siv2_all,exac03,1000g2015aug); python (version 2); strelka (version >=2.8.3, note: strelka is tuned to run exome sequencing or RNA sequencing); manta (version >=1.4.0); java (version 1.8); perl (Parallel::ForkManager); lofreq_star (version >=2.1.3, for tumor-only calling); bowtie2 (version>= 2.3.4.3, for Patient Derived Xenograft models)
+## Hardwares/Softwares Dependencies
+64 bit linux operating system; BWA (version >=0.7.15); STAR (required if applied for RNA sequencing data); sambamba; speedseq; varscan, samtools (version >=1.6); shimmer; annovar (database downloaded in default folder: refGene,ljb26_all,cosmic70,esp6500siv2_all,exac03,1000g2015aug); python (version 2); strelka (version >=2.8.3, note: strelka is tuned to run exome sequencing or RNA sequencing); manta (version >=1.4.0); java (version 1.8); perl (Parallel::ForkManager); lofreq_star (version >=2.1.3, for tumor-only calling); bowtie2 (version>= 2.3.4.3, for Patient Derived Xenograft models)
 ## Input files
 Input can be fastq files or bam files or a mixture of fastq and bam files.
 ## Main procedures:
@@ -35,6 +35,7 @@ Input seuqencing files: (1) If input are fastq files, they must be 'gz' files. '
 "java17": path (including the executable file name) to java 1.7 (needed only for MuTect). 
 "ouput": the output folder, it will be deleted (if pre-existing) adn re-created during analysis. 
 "pdx": "PDX" or "human" if this is PDX sample, reads will be aligned to mouse genome first. And unmapped reads will be mapped to the human genome.
+(4) Example data to run the pipelines can be found at XXXXXX. The output for the example data can be found at XXXXXXX.
 ## job_somatic.pl
 Slurm wrapper for somatic.pl for a batch of sampels and it is easy to change for other job scheduler system by revising this line of code: "system("sbatch ".$job)" and using proper demo job submission shell script.
 ### Command
