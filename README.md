@@ -35,7 +35,7 @@ Input seuqencing files: (1) If input are fastq files, they must be 'gz' files. '
 "java17": path (including the executable file name) to java 1.7 (needed only for MuTect). 
 "ouput": the output folder, it will be deleted (if pre-existing) adn re-created during analysis. 
 "pdx": "PDX" or "human" if this is PDX sample, reads will be aligned to mouse genome first. And unmapped reads will be mapped to the human genome.
-(4) Example data to run the pipelines can be found at XXXXXX. The output for the example data can be found at XXXXXXX.
+(4) Example data to run the pipelines can be found at https://github.com/Somatic-pipeline/QBRC-Somatic-Pipeline/tree/master/example/example_dataset/sequencing. The output for the example data can be found at https://github.com/Somatic-pipeline/QBRC-Somatic-Pipeline/tree/master/example/example_dataset/example_output.
 ## job_somatic.pl
 Slurm wrapper for somatic.pl for a batch of sampels and it is easy to change for other job scheduler system by revising this line of code: "system("sbatch ".$job)" and using proper demo job submission shell script.
 ### Command
