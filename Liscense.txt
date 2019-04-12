@@ -1,4 +1,4 @@
-Somatic mutation calling/neoantigen calling pipeline
+QBRC somatic mutation calling pipeline
 
 Copyright (C) <2019>  <Tianshi Lu, Tao Wang>
 
