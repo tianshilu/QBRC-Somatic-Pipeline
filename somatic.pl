@@ -2,11 +2,12 @@
 #
 # The instructions must be followed exactly!!! 
 # need at least 128GB of memory
-# commonly appearing human genetics polymorphism will be filtered out
+# the fastq files cannot be coordinated sorted!!!
+# commonly appearing germline mutations are filtered out from the somatic and germline output
 #
 # prerequisite in path: 
 # Rscript, bwa (>=0.7.15), STAR (if using RNA-Seq data), sambamba, speedseq, varscan, samtools (>=1.6), shimmer
-# annovar (database downloaded in default folder: refGene,ljb26_all,cosmic70,esp6500siv2_all,exac03,1000g2015aug)
+# annovar (refGene,ljb26_all,cosmic70,esp6500siv2_all,exac03,1000g2015aug downloaded in humandb and refGene downloaded in mousedb)
 # python (2), strelka (>=2.8.3, note: strelka is tuned to run exome-seq or RNA-seq), manta(>=1.4.0), java (1.8)
 # perl (need Parallel::ForkManager), lofreq_star (>=2.1.3), bowtie2 (>=2.3.4.3, for PDX mode)
 #
@@ -19,12 +20,17 @@
 #              (4) if Agilent SureSelect (Deep exome sequencing) data, use "Deep:fastq1" at the first or third slot
 #                  optional: run somatic_script/SurecallTrimmer.jar on the fastq files before running somatic.pl
 #              (5) for tumor-only calling, put "NA NA" in the slots of the normal samples. Results will be written to *germline* files
+#              (6) If only single end fastq data are available, put the fastq file(s) at the first and/or the third slots, 
+#                  then put NA in the second and/or fourth slot
 # thread: number of threads to use. Recommended: 32
-# build: human genome build, hg19 or hg38
-# index: path (including file name) to the human reference genome
+# build: hg19 or hg38 or mm10
+# index: path (including file name) to the human/mouse reference genome
 # java17: path (including the executable file name) to java 1.7 (needed only for mutect)
 # output: the output folder, it will be deleted (if pre-existing) and re-created during analysis
-# pdx: "PDX" or "human". if this is a PDX sample, reads will be aligned to mouse genome first. And unmapped reads will be mapped to the human genome
+# pdx: "PDX" or "human" or "mouse" 
+#
+# There is a hidden parameter that could be used for debuging or other more advanced purposes:
+# debug=0 (default) or 1 (keep all bam and mpileup files). Modify it below
 #
 #!/usr/bin/perl
 use strict;
@@ -33,10 +39,12 @@ use Cwd 'abs_path';
 use File::Copy;
 use Parallel::ForkManager;
 
+my $debug=0; # default, will delete the large bam and mpileup files
+
 my ($fastq1_normal,$fastq2_normal,$fastq1_tumor,$fastq2_tumor,$thread,$build,$index,$java17,$output,$pdx)=@ARGV;
 my ($line0,$line1,$line2,$read_name,$valid,$path,$picard,$mutect,$gatk,$resource,$dict,$locatit,$annovar_path,$rna,$star_index);
 my ($resource_1000g,$resource_mills,$resource_dbsnp,$resource_cosmic,$normal_bam,$tumor_bam,$type,$mouse_ref);
-my ($strelka_exome,$zcat,$bam2fastq,$pm,$ppm,$pid,$command);
+my ($known,$strelka_exome,$zcat,$bam2fastq,$pm,$ppm,$pid,$command,$annovar_db,$annovar_protocol);
 my ($normal_output,$tumor_output,$mutect_tmp,$speed_tmp);
 
 my $read_ct_max=100000000; # put a cap on how many reads to use, for sake of memory
@@ -54,7 +62,7 @@ my %fastq=("tumor"=>[$fastq1_tumor,$fastq2_tumor],"normal"=>[$fastq1_normal,$fas
 
 $resource=$index."_resource";
 $dict=$index;
-$dict=~s/fa$/dict/;
+$dict=~s/fa$/dict/;$dict=~s/fasta$/dict/;
 $star_index=$index;
 $star_index=~s/\/[^\/]*?$/\/STAR/;
 $mouse_ref=$index."_mouse/mm10";
@@ -67,10 +75,10 @@ $picard=$path."/somatic_script/picard.jar";
 $bam2fastq=$path."/somatic_script/bam2fastq.pl";
 $locatit=$path."/somatic_script/LocatIt_v4.0.1.jar";
 
-$resource_1000g=$resource."/1000G_phase1.snps.high_confidence.".$build.".vcf";
-$resource_mills=$resource."/Mills_and_1000G_gold_standard.indels.".$build.".vcf";
-$resource_dbsnp=$resource."/dbsnp.".$build.".vcf";
-$resource_cosmic=$resource."/CosmicCodingMuts.".$build.".vcf";
+$resource_1000g=$resource."/1000G_phase1.snps.high_confidence.".$build.".vcf"; # human only
+$resource_mills=$resource."/Mills_and_1000G_gold_standard.indels.".$build.".vcf"; # human only
+$resource_dbsnp=$resource."/dbsnp.".$build.".vcf"; # human+mouse
+$resource_cosmic=$resource."/CosmicCodingMuts.".$build.".vcf"; # human only
 
 $strelka_exome="--exome";
 
@@ -125,7 +133,7 @@ if (${$fastq{"normal"}}[0] ne "NA")
   $ppm->wait_all_children;
 }else #tumor only calling
 {
-  system_call("lofreq call -s --sig 0.3 --bonf 1 -C 7 -f ".$index." -S ".$resource_dbsnp.".gz --call-indels ".
+  system_call("lofreq call -s --sig 0.1 --bonf 1 -C 7 -f ".$index." -S ".$resource_dbsnp.".gz --call-indels ".
     " -l ".$index.".exon.bed -o ".$output."/lofreq.vcf ".$tumor_bam);
 }
 
@@ -155,21 +163,31 @@ $annovar_path=<AV>;
 close(AV);
 $annovar_path=~s/table_annovar.pl\n//;
 
-system_call("table_annovar.pl ".$output."/somatic_mutations.txt ".$annovar_path."/humandb/ -buildver ".$build." -out ".$output.
-  "/somatic_mutations -remove -protocol refGene,ljb26_all,cosmic70,esp6500siv2_all,exac03,1000g2015aug_all".
-  " -operation g,f,f,f,f,f -nastring .");
-system_call("Rscript ".$path."/somatic_script/filter_vcf2.R ".$output."/somatic_mutations.txt ".$output."/somatic_mutations.".
-  $build."_multianno.txt ".$output."/somatic_mutations_".$build.".txt");
-unlink($output."/somatic_mutations.txt");
-unlink($output."/somatic_mutations.".$build."_multianno.txt");
+if ($pdx=~/mouse/)
+{
+  $annovar_db="/mousedb/";
+  $annovar_protocol=" -protocol refGene -operation g ";
+}else
+{
+  $annovar_db="/humandb/";
+  $annovar_protocol=" -protocol refGene,ljb26_all,cosmic70,esp6500siv2_all,exac03,1000g2015aug_all -operation g,f,f,f,f,f ";
+}
 
-system_call("table_annovar.pl ".$output."/germline_mutations.txt ".$annovar_path."/humandb/ -buildver ".$build." -out ".$output.
-  "/germline_mutations -remove -protocol refGene,ljb26_all,cosmic70,esp6500siv2_all,exac03,1000g2015aug_all".
-  " -operation g,f,f,f,f,f -nastring .");
-system_call("Rscript ".$path."/somatic_script/filter_vcf2.R ".$output."/germline_mutations.txt ".$output."/germline_mutations.".
-  $build."_multianno.txt ".$output."/germline_mutations_".$build.".txt");
-unlink($output."/germline_mutations.txt");
-unlink($output."/germline_mutations.".$build."_multianno.txt");
+foreach $type (("germline","somatic"))
+{
+  system_call("table_annovar.pl ".$output."/".$type."_mutations.txt ".$annovar_path.$annovar_db." -buildver ".$build." -out ".$output.
+    "/".$type."_mutations -remove ".$annovar_protocol." -nastring .");
+  system_call("Rscript ".$path."/somatic_script/filter_vcf2.R ".$output."/".$type."_mutations.txt ".$output."/".$type."_mutations.".
+    $build."_multianno.txt ".$output."/".$type."_mutations_".$build.".txt");
+  unlink($output."/".$type."_mutations.txt");
+  unlink($output."/".$type."_mutations.".$build."_multianno.txt");
+
+  system_call("annotate_variation.pl -geneanno -dbtype refGene -buildver ".$build." ".$output."/".$type."_mutations_".$build.".txt ".$annovar_path.$annovar_db);
+  system_call("coding_change.pl --includesnp --alltranscript --newevf ".$output."/".$type."_mutations_".$build.".txt_tmp.txt ".$output."/".$type."_mutations_".$build.".txt".
+    ".exonic_variant_function ".$annovar_path.$annovar_db."/".$build."_refGene.txt ".$annovar_path.$annovar_db."/".$build."_refGeneMrna.fa >/dev/null 2>/dev/null");
+  system_call("Rscript ".$path."/somatic_script/add_fs_annotation.R ".$output." ".$build." ".$type);
+  system_call("rm -f ".$output."/".$type."_mutations_".$build.".txt?*");
+}
 
 # clean up
 system("date");
@@ -184,15 +202,16 @@ system("rm -f ".$output."/het_counts*");
 system("rm -f ".$output."/somatic_diffs*");
 system("rm -f ".$output."/somatic_indels.vs");
 system("rm -f ".$output."/passed.somatic.*");
-system("rm -rf ".$normal_output);
-system("rm -rf ".$tumor_output);
+if ($debug==0)
+{
+  system("rm -rf ".$normal_output);
+  system("rm -rf ".$tumor_output);
+}
 system("rm -f ".$output."/indel_counts*");
 system("rm -f ".$output."/het_counts*");
 system("rm -f ".$output."/somatic_diffs*");
 system("rm -f ".$output."/somatic_indels.vs");
 system("rm -f ".$output."/passed.somatic.*");
-system("rm -rf ".$normal_output);
-system("rm -rf ".$tumor_output);
 system("rm -rf ".$mutect_tmp);
 system("rm -rf ".$speed_tmp);
 
@@ -213,6 +232,15 @@ sub alignment{
       system_call("perl ".$bam2fastq." ".${$fastq{$type}}[1]." ".$type_output." ".$thread);
     }else # or pre-process fastq.gz files
     {
+      # create R2 if single end sequencing data are provided
+      if (${$fastq{$type}}[1] eq "NA")
+      {
+        system_call("perl ".$path."somatic_script/reverse_complement.pl ".${$fastq{$type}}[0]." ".
+          $type_output."/R2.fastq.gz");
+        ${$fastq{$type}}[1]=$type_output."/R2.fastq.gz";
+      }
+
+      # other filtering
       open(FQ_IN1,"zcat ".${$fastq{$type}}[0]." |");
       open(FQ_OUT1,">".$type_output."/fastq1.fastq");
       open(FQ_IN2,"zcat ".${$fastq{$type}}[1]." |");
@@ -332,20 +360,22 @@ sub alignment{
     }
 
     # indel realignment
-    system_call("java -Djava.io.tmpdir=".$type_output."/tmp -jar ".$gatk." -T RealignerTargetCreator -R ".$index." --num_threads ".$thread." -known ".$resource_mills.
-        " -known ".$resource_1000g." --bam_compression 0 -o ".$type_output."/".$type."_intervals.list -I ".$type_output."/dupmark.bam > ".$type_output."/index.out");
+    if ($pdx=~/mouse/) {$known=" -known ".$resource_dbsnp." ";} else {$known=" -known ".$resource_mills." -known ".$resource_1000g." ";}
+    system_call("java -Djava.io.tmpdir=".$type_output."/tmp -jar ".$gatk." -T RealignerTargetCreator -R ".$index." --num_threads ".$thread.
+      $known." --bam_compression 0 -o ".$type_output."/".$type."_intervals.list -I ".$type_output."/dupmark.bam > ".$type_output."/index.out");
 
     system_call("java -Djava.io.tmpdir=".$type_output."/tmp -jar ".$gatk." -T IndelRealigner --bam_compression 0 ".
-        " --filter_bases_not_stored --disable_auto_index_creation_and_locking_when_reading_rods -R ".$index." -known ".
-        $resource_mills." -known ".$resource_1000g." -targetIntervals ".$type_output."/".$type."_intervals.list -I ".
-        $type_output."/dupmark.bam -o ".$type_output."/realigned.bam >".$type_output."/".$type."_realign.out");
+      " --filter_bases_not_stored --disable_auto_index_creation_and_locking_when_reading_rods -R ".$index.$known.
+      " -targetIntervals ".$type_output."/".$type."_intervals.list -I ".
+      $type_output."/dupmark.bam -o ".$type_output."/realigned.bam >".$type_output."/".$type."_realign.out");
 
     unlink_file($type_output."/dupmark.bam");
     unlink_file($type_output."/dupmark.bam.bai");
 
     # base recalibration
+    if ($pdx=~/mouse/) {$known=" ";} else {$known=" -knownSites ".$resource_mills." ";}
     system_call("java -Djava.io.tmpdir=".$type_output."/tmp -jar ".$gatk." -T BaseRecalibrator -R ".$index." --bam_compression 0 ".
-        " -knownSites ".$resource_dbsnp." -knownSites ".$resource_mills." -I ".$type_output."/realigned.bam -o ".$type_output."/".
+        " -knownSites ".$resource_dbsnp.$known." -I ".$type_output."/realigned.bam -o ".$type_output."/".
         $type."_bqsr > ".$type_output."/table.out");
     system_call("java -Djava.io.tmpdir=".$type_output."/tmp -jar ".$gatk." -T PrintReads -rf NotPrimaryAlignment --bam_compression 0 -R ".
         $index." -I ".$type_output."/realigned.bam -BQSR ".$type_output."/".$type."_bqsr -o ".
@@ -365,8 +395,9 @@ sub alignment{
 }		
 
 sub fun_mutect{
+  if ($pdx=~/mouse/) {$known=" ";} else {$known=" --cosmic ".$resource_cosmic." ";}
   system_call($java17." -Djava.io.tmpdir=".$mutect_tmp." -Xmx32g -jar ".$mutect." --analysis_type MuTect --reference_sequence ".$index.
-    " --dbsnp ".$resource_dbsnp." --cosmic ".$resource_cosmic." --input_file:tumor ".$tumor_bam." --input_file:normal ".$normal_bam.
+    " --dbsnp ".$resource_dbsnp.$known." --input_file:tumor ".$tumor_bam." --input_file:normal ".$normal_bam.
     " --vcf ".$output."/mutect.vcf --out ".$output."/mutect.out");
 }
 
@@ -440,4 +471,13 @@ sub system_call
 #/archive/BICF/shared/Kidney/exome/RAW/SAM19944142_1_2.gne.fastq.gz \
 #32 hg38 /home2/twang6/data/genomes/hg38/hs38d1.fa \
 #/cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java \
-#~/iproject/test/ human
+#/project/bioinformatics/Xiao_lab/shared/neoantigen/data/tmp/ human
+#
+#perl /home2/twang6/software/cancer/somatic/somatic.pl \
+#/archive/BICF/shared/Kidney/exome/RAW/LIB27355_SAM19944430_36695_R1.fastq.gz \
+#/archive/BICF/shared/Kidney/exome/RAW/LIB27355_SAM19944430_36695_R2.fastq.gz \
+#/archive/BICF/shared/Kidney/exome/RAW/LIB27324_SAM19944399_36728_R1.fastq.gz \
+#/archive/BICF/shared/Kidney/exome/RAW/LIB27324_SAM19944399_36728_R2.fastq.gz \
+#32 mm10 /home2/twang6/data/genomes/mm10/mm10.fasta \
+#/cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java \
+#/project/bioinformatics/Xiao_lab/shared/neoantigen/data/tmp mouse
