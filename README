@@ -1,0 +1,22 @@
+# Works for human and mouse
+# somatic mutation calling with matched normal sample is very stingent
+# germline mutation calling and somatic mutation calling without matched normal is loose
+
+somatic.pl: pipeline for somatic and germline mutation calling				for each sample		
+job_somatic.pl: biohpc submission wrapper for somatic.pl				for a batch of samples	
+filter.R: post-processing script for somatic mutations					for a batch of samples	
+
+cnv.pl: pipeline for somatic CNV calling and quality check				for each sample		
+job_cnv.pl: biohpc submission wrapper for cnv.pl					for a batch of samples	
+summarize_cnv.R: summarizing script for CNV and quality check callings			for a batch of samples	
+
+evolution.pl: inferring evolutionary relationships using mutation and CNV results 	for a batch of samples from one patient
+
+Updates:
+
+12/13/2018: Enabled mouse mutation and cnv calling
+01/09/2019: Included COSMIC consensus gene annotation in the mutation summary tables
+01/28/2019: Fixed the protein sequence annotation issue 
+03/31/2019: Added the evolution.pl script
+04/05/2019: Added the $debug hidden parameter
+04/15/2019: Added handling of single end sequencing data
