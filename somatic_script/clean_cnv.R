@@ -37,7 +37,7 @@ cnv_gene=cnv_gene[order(cnv_gene$gene),]
 
 if (somatic!="1")
 {
-  somatic=read.table(somatic,stringsAsFactors = F,header=T,sep="\t")
+  somatic=read.table(somatic,stringsAsFactors = F,header=T,sep="\t",colClasses=c("Ref"="character","Alt"="character"))
   tumor_fraction=quantile(somatic$Tumor_alt/(somatic$Tumor_alt+somatic$Tumor_ref),0.8)
   cnv_gene$cnv=(cnv_gene$cnv-(1-tumor_fraction)*2)/tumor_fraction
 }

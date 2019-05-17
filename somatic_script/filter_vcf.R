@@ -68,7 +68,7 @@ filter_vcf<-function(vcf,caller,type="somatic")
     vcf$tumor_alt=extract_count(fields,vcf$V11,AO)
   }else if (caller=="lofreq") # lofreq, only for unmatched samples
   {
-    tmp=sapply(fields,function(x) strsplit(x,";")[[1]])
+    tmp=sapply(fields,function(x) strsplit(x,";")[[1]],simplify=F)
     total_count=sapply(tmp,function(x) as.numeric(sub("DP=","",grep("DP=",x,value=T))))
     var_count=round(total_count*
       sapply(tmp,function(x) as.numeric(sub("AF=","",grep("AF=",x,value=T)))))
@@ -149,24 +149,12 @@ if (normal=="NA")
     "tumor_alt")],file="germline_mutations.txt",col.names=F,row.names=F,sep="\t",quote=F)
   
   lofreq_somatic=lofreq_germline[lofreq_germline$tumor_alt/
-    (lofreq_germline$tumor_ref+lofreq_germline$tumor_alt)<0.75,]
+    (lofreq_germline$tumor_ref+lofreq_germline$tumor_alt)<0.5,]
   write.table(lofreq_somatic[,c("V1","V2","V3","V4","V5","V8","normal_ref","normal_alt","tumor_ref",
     "tumor_alt")],file="somatic_mutations.txt",col.names=F,row.names=F,sep="\t",quote=F)
   
   q()
 }
-
-#########  read and process germline vcfs  ###########
-
-varscan_germline_indel=read_vcf("varscan.indel.Germline.vcf")
-varscan_germline_snp=read_vcf("varscan.snp.Germline.vcf")
-varscan_LOH_indel=read_vcf("varscan.indel.LOH.vcf")
-varscan_LOH_snp=read_vcf("varscan.snp.LOH.vcf")
-
-varscan_germline=rbind(varscan_germline_indel,varscan_germline_snp,varscan_LOH_indel,varscan_LOH_snp)
-varscan_germline=filter_vcf(varscan_germline,"varscan","germline")
-write.table(varscan_germline[,c("V1","V2","V3","V4","V5","V8","normal_ref","normal_alt","tumor_ref",
-  "tumor_alt")],file="germline_mutations.txt",col.names=F,row.names=F,sep="\t",quote=F)
 
 #########  read somatic vcfs  ##################
 
@@ -207,10 +195,31 @@ lofreq_n$mutation=paste(lofreq_n$V1,lofreq_n$V2,lofreq_n$V4,lofreq_n$V5)
 lofreq_t$normal_ref=lofreq_n$normal_ref[match(lofreq_t$mutation,lofreq_n$mutation)]
 lofreq_t$normal_alt=lofreq_n$normal_alt[match(lofreq_t$mutation,lofreq_n$mutation)]
 lofreq=lofreq_t[,colnames(lofreq_t)!="mutation"]
+lofreq_germline=lofreq # for germline filtering
 lofreq=lofreq[is.na(lofreq$normal_alt) | (lofreq$normal_alt/(lofreq$normal_ref+lofreq$normal_alt)<
                 lofreq$tumor_alt/(lofreq$tumor_ref+lofreq$tumor_alt)/2),]
 lofreq=lofreq[is.na(lofreq$normal_alt) | 
                 (lofreq$normal_alt/(lofreq$normal_ref+lofreq$normal_alt)<0.05),]
+lofreq=lofreq[lofreq$V6>=10,]
+
+#########  read and process germline vcfs  ###########
+
+# varscan results
+varscan_germline_indel=read_vcf("varscan.indel.Germline.hc.vcf")
+varscan_germline_snp=read_vcf("varscan.snp.Germline.hc.vcf")
+varscan_LOH_indel=read_vcf("varscan.indel.LOH.hc.vcf")
+varscan_LOH_snp=read_vcf("varscan.snp.LOH.hc.vcf")
+varscan_germline=rbind(varscan_germline_indel,varscan_germline_snp,varscan_LOH_indel,varscan_LOH_snp)
+varscan_germline=filter_vcf(varscan_germline,"varscan","germline")
+
+# lofreq results
+keep=paste(varscan_germline$V2,varscan_germline$V3,varscan_germline$V4,varscan_germline$V5) %in%
+  paste(lofreq_germline$V2,lofreq_germline$V3,lofreq_germline$V4,lofreq_germline$V5)
+varscan_germline$V8[keep]="varscan,lofreq"
+
+# output
+write.table(varscan_germline[,c("V1","V2","V3","V4","V5","V8","normal_ref","normal_alt","tumor_ref",
+  "tumor_alt")],file="germline_mutations.txt",col.names=F,row.names=F,sep="\t",quote=F)
 
 #########  combine somatic vcfs  #############
 
