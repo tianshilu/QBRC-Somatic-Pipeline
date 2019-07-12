@@ -50,13 +50,20 @@ thread build index java17 /Directory/to/output pdx
 perl ~/somatic/somatic.pl ~/seq/1799-01N.R1.fastq.gz ~/seq/1799-01N.R2.fastq.gz ~/seq/1799-01T.R1.fastq.gz ~/seq/1799-01T.R2.fastq.gz 32 hg38 ~/ref/hg38/hs38d1.fa /cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java ~/somatic_result/1799-01/ human
 ```
 ### Note:
-Input seuqencing files: (1) If input are fastq files, they must be 'gz' files. 'sequencing_file_1', 'sequencing_file_2' are path to fastq1 and fastq2 of normal sample; 'sequencing_file_3', 'sequencing_file_4' are path to fastq1 and fastq2 of tumor samples.n\ (2) If input are bam files, use "bam /path/to/bam/files.bam" in replace of the tow corresponding fastq input files.n\ (3) If input are RNA sequencing files, use "RNA:fastq1" or "RNA:bam" at the first or third slot. (4) If input are deep exome sequencing data, use "Deep:fastq1" at the first or third slot. (5) For tumor-only calling, put "NA NA" in the first two slots. Results will be written to germline output files. (6) Optional: run somatic_script/SurecallTrummer.jar on the fastq files before runnign somatic.pl for deep seuquencing files. (7) If only single end fastq data are available, put the fastq file(s) at the first and/or the third slots, then put NA in the second and/or fourth slot.
-"thread": number of threads to use. 
-"build": genome build, hg19 or hg38. 
-"index": path (including file names) to the reference genome fasta file of the reference bundle hg38 or hg19. (The pipeline will search for other files in that bundle folder automatically.) 
-"java17": path (including the executable file name) to java 1.7 (needed only for MuTect). 
-"ouput": the output folder, it will be deleted (if pre-existing) adn re-created during analysis. 
-"pdx": "PDX" or "human" if this is PDX sample, reads will be aligned to mouse genome first. And unmapped reads will be mapped to the human genome.\
+Input seuqencing files:  
+(1) If input are fastq files, they must be 'gz' files. 'sequencing_file_1', 'sequencing_file_2' are path to fastq1 and fastq2 of normal sample; 'sequencing_file_3', 'sequencing_file_4' are path to fastq1 and fastq2 of tumor samples.  
+(2) If input are bam files, use "bam /path/to/bam/files.bam" in replace of the tow corresponding fastq input files.  
+(3) If input are RNA sequencing files, use "RNA:fastq1" or "RNA:bam" at the first or third slot.  
+(4) If input are deep exome sequencing data, use "Deep:fastq1" at the first or third slot.  
+(5) For tumor-only calling, put "NA NA" in the first two slots. Results will be written to germline output files.  
+(6) Optional: run somatic_script/SurecallTrummer.jar on the fastq files before runnign somatic.pl for deep seuquencing files.  
+(7) If only single end fastq data are available, put the fastq file(s) at the first and/or the third slots, then put NA in the second and/or fourth slot.  
+"thread": number of threads to use.  
+"build": genome build, hg19 or hg38.  
+"index": path (including file names) to the reference genome fasta file of the reference bundle hg38 or hg19. (The pipeline will search for other files in that bundle folder automatically.)  
+"java17": path (including the executable file name) to java 1.7 (needed only for MuTect).  
+"ouput": the output folder, it will be deleted (if pre-existing) adn re-created during analysis.  
+"pdx": "PDX" or "human" if this is PDX sample, reads will be aligned to mouse genome first. And unmapped reads will be mapped to the human genome.  
 (4) Example data to run the QBRC somatic mutation pipeline can be found at https://github.com/Somatic-pipeline/QBRC-Somatic-Pipeline/tree/master/example/example_dataset/sequencing. The output for the example data can be found at https://github.com/Somatic-pipeline/QBRC-Somatic-Pipeline/tree/master/example/example_dataset/example_output.
 ## job_somatic.pl
 Slurm wrapper for somatic.pl for a batch of sampels and it is easy to change for other job scheduler system by revising this line of code: "system("sbatch ".$job)" and using proper demo job submission shell script.
