@@ -36,16 +36,28 @@ All SNPs and Indels were combined ony kept if there were at least 7 total( wild 
 ## Guided Tutorial
 ## somatic.pl
 The code for somatic and germline mutation calling for a pair of normal and tumor sequencing files.
-### Command
+
+### Usage
 ```
-perl /Directory/to/folder/of/code/somatic.pl 
-sequencing_file_1 
-sequencing_file_2 
-sequencing_file_3 
-sequencing_file_4 
-thread build index java17 /Directory/to/output pdx
+perl /Path/to/somatic.pl <normal_fastq1> <normal_fastq2/NA> <tumor_fastq1> <tumor_fastq2/NA> \ 
+<thread> <build> <index> <java17> </Path/to/output> <pdx>
 ```
-### Example: 
+* fastq files:  
+  * fastq1 and fastq2 of normal sample, fastq1 and fastq2 of tumor sample (must be .gz) default input is full path to the 4 fastq files for tumor and normal samples.  
+  * If need to directly input bam files, use "bam path_to_bam.bam" in replace of the two corresponding fastq input files can be a mixture of fastq and bam input.  
+  * If RNA-Seq data are used, use "RNA:fastq1" or "RNA:bam" at the first
+  * If Agilent SureSelect (Deep exome sequencing) data, use "Deep:fastq1" at the first or third slot.  
+ optional: run somatic_script/SurecallTrimmer.jar on the fastq files before running somatic.pl.  
+  * For tumor-only calling, put "NA NA" in the slots of the normal samples. Results will be written to *germline* files
+  * If only single end fastq data are available, put the fastq file(s) at the first and/or the third slots, then put NA in the second and/or fourth slot.  
+* thread: number of threads to use. Recommended: 32  
+* build: hg19 or hg38 or mm10  
+* index: path (including file name) to the human/mouse reference genome  
+* java17: path (including the executable file name) to java 1.7 (needed only for mutect)  
+* output: the output folder, it will be deleted (if pre-existing) and re-created during analysis  
+* pdx: "PDX" or "human" or "mouse"  
+
+### Example:
 ```
 perl ~/somatic/somatic.pl ~/seq/1799-01N.R1.fastq.gz ~/seq/1799-01N.R2.fastq.gz ~/seq/1799-01T.R1.fastq.gz ~/seq/1799-01T.R2.fastq.gz 32 hg38 ~/ref/hg38/hs38d1.fa /cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java ~/somatic_result/1799-01/ human
 ```
