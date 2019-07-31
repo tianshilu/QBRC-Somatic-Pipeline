@@ -25,13 +25,13 @@ bowtie2 (version>= 2.3.4.3, for Patient Derived Xenograft models)
 ## Input files
 Input can be fastq files or bam files or a mixture of fastq and bam files.
 ## Main procedures:
-Genome Alignment:  
+* Genome Alignment:  
 Genome sequencing files are aligned to the human reference genome by BWA-MEM (Please contact Tianshi.Lu@UTSouthwestern.edu for genome reference files). Picard was used to add read group information and sambamba was used to mark PCR duplilcates. GATK toolkt was used to perform base quality score relcalibration adn local realignment around Indels.
-Variant Calling:  
+* Variant Calling:  
 MuTect, VarScan Shimmer, SpeedSeq, Manta, and Strelka2 were used to call SNPs and Indels. A mutation that was repeatedly called by any two of these softwares was retained.
-Mutation Annotation:  
+* Mutation Annotation:  
 Annovar was used to annotate SNPs, and Indels and protein sequence changes. Somatic mutations and germline mutations were annotated according to the mutation allele frequencies in the normal and tumor samples.
-Filter False Mutations:  
+* Filter False Mutations:  
 All SNPs and Indels were combined ony kept if there were at least 7 total( wild type and variant) reads in the normal sample and at least 3 variant reads in the tumor sample. Variants with allele frequency more than 2 times allele frequency of the according normal allele are kept. Variants with allele frequency less than 5% in background sample are kept.
 ## Guided Tutorial
 ## somatic.pl
