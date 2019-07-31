@@ -1,9 +1,10 @@
 #####################  human somatic mutation calling ########################
 #
 # The instructions must be followed exactly!!! 
-# need at least 128GB of memory
-# the fastq files cannot be coordinated sorted!!!
-# commonly appearing germline mutations are filtered out from the somatic and germline output
+# Need at least 32GB of memory for DNA jobs and 128GB for RNA jobs
+# The fastq files cannot be coordinated sorted!!!
+# Commonly appearing SNVs in the population are filtered out from the somatic output
+# structural variation calling only works for paired-end DNA-seq data with matched normal
 #
 # prerequisite in path: 
 # Rscript, bwa (>=0.7.15), STAR (if using RNA-Seq data), sambamba, speedseq, varscan, samtools (>=1.6), shimmer
@@ -20,6 +21,7 @@
 #              (4) if Agilent SureSelect (Deep exome sequencing) data, use "Deep:fastq1" at the first or third slot
 #                  optional: run somatic_script/SurecallTrimmer.jar on the fastq files before running somatic.pl
 #              (5) for tumor-only calling, put "NA NA" in the slots of the normal samples. Results will be written to *germline* files
+#                  mutation callling is super sensitive and not specific in this case
 #              (6) If only single end fastq data are available, put the fastq file(s) at the first and/or the third slots, 
 #                  then put NA in the second and/or fourth slot
 # thread: number of threads to use. Recommended: 32
@@ -29,9 +31,6 @@
 # output: the output folder, it will be deleted (if pre-existing) and re-created during analysis
 # pdx: "PDX" or "human" or "mouse" 
 #
-# There is a hidden parameter that could be used for debuging or other more advanced purposes:
-# debug=0 (default) or 1 (keep all bam and mpileup files). Modify it below
-#
 #!/usr/bin/perl
 use strict;
 use warnings;
@@ -39,7 +38,7 @@ use Cwd 'abs_path';
 use File::Copy;
 use Parallel::ForkManager;
 
-my $debug=0; # default, will delete the large bam and mpileup files
+my $debug=0; # 0 is default, 1 will invoke some non-standard and advanced usages of the pipeline
 
 my ($fastq1_normal,$fastq2_normal,$fastq1_tumor,$fastq2_tumor,$thread,$build,$index,$java17,$output,$pdx)=@ARGV;
 my ($line0,$line1,$line2,$read_name,$valid,$path,$picard,$mutect,$gatk,$resource,$dict,$locatit,$annovar_path,$rna,$star_index);
@@ -133,8 +132,18 @@ if (${$fastq{"normal"}}[0] ne "NA")
   $ppm->wait_all_children;
 }else #tumor only calling
 {
-  system_call("lofreq call -s --sig 0.1 --bonf 1 -C 7 -f ".$index." -S ".$resource_dbsnp.".gz --call-indels ".
-    " -l ".$index.".exon.bed -o ".$output."/lofreq.vcf ".$tumor_bam);
+  #system_call("lofreq call -s --sig 1 --bonf 1 -C 5 -f ".$index." --call-indels ".
+  #  " --verbose --use-orphan -o ".$output."/lofreq.vcf ".$tumor_bam);
+  system_call("configureStrelkaGermlineWorkflow.py --bam ".$tumor_bam." --referenceFasta ".$index.
+  " --runDir ".$output."/strelka/ ".$strelka_exome);
+  
+  system_call($output."/strelka/runWorkflow.py -m local -j ".$thread);
+  system_call("cp ".$output."/strelka/results/variants/variants.vcf.gz ".$output);
+  system_call("cp ".$output."/strelka/results/variants/variants.vcf.gz ".$output."/intermediate");
+  system_call("gzip -d ".$output."/variants.vcf.gz");
+  system_call("rm -f -r ".$output."/strelka");
+
+  system_call("lumpyexpress -B ".$tumor_bam." -R ".$index." -o ".$output."/lumpy_sv.vcf.txt -T ".$output."/tumor/lumpy_temp");
 }
 
 ###############################  integrate vcf files  #############################
@@ -178,7 +187,7 @@ foreach $type (("germline","somatic"))
   system_call("table_annovar.pl ".$output."/".$type."_mutations.txt ".$annovar_path.$annovar_db." -buildver ".$build." -out ".$output.
     "/".$type."_mutations -remove ".$annovar_protocol." -nastring .");
   system_call("Rscript ".$path."/somatic_script/filter_vcf2.R ".$output."/".$type."_mutations.txt ".$output."/".$type."_mutations.".
-    $build."_multianno.txt ".$output."/".$type."_mutations_".$build.".txt");
+    $build."_multianno.txt ".$output."/".$type."_mutations_".$build.".txt ".$type);
   unlink($output."/".$type."_mutations.txt");
   unlink($output."/".$type."_mutations.".$build."_multianno.txt");
 
@@ -189,11 +198,18 @@ foreach $type (("germline","somatic"))
   system_call("rm -f ".$output."/".$type."_mutations_".$build.".txt?*");
 }
 
+# sv
+system("rm -f ".$output."/*vcf");
+if (-e $output."/lumpy_sv.vcf.txt")
+{
+  system_call("grep -v IMPRECISE ".$output."/lumpy_sv.vcf.txt > ".$output."/lumpy_sv_".$build.".vcf");
+  system_call("rm -f ".$output."/lumpy_sv.vcf.txt");
+}
+
 # clean up
 system("date");
 system("rm -f ".$output."/*out");
 system("rm -f ".$output."/*idx");
-system("rm -f ".$output."/*vcf");
 system("rm -f ".$output."/speedseq*");
 system("rm -f ".$output."/som_counts*");
 system("rm -f ".$output."/passed_*");
@@ -202,11 +218,12 @@ system("rm -f ".$output."/het_counts*");
 system("rm -f ".$output."/somatic_diffs*");
 system("rm -f ".$output."/somatic_indels.vs");
 system("rm -f ".$output."/passed.somatic.*");
-if ($debug==0)
+if ($debug==1)
 {
-  system("rm -rf ".$normal_output);
-  system("rm -rf ".$tumor_output);
+  system_call("cat ".$tumor_output."/tumor.mpileup | cut -f 1-4 > ".$output."/coverage.txt");
 }
+system("rm -rf ".$normal_output);
+system("rm -rf ".$tumor_output);
 system("rm -f ".$output."/indel_counts*");
 system("rm -f ".$output."/het_counts*");
 system("rm -f ".$output."/somatic_diffs*");
@@ -309,11 +326,11 @@ sub alignment{
         system_call("mkdir ".$type_output."/tmp");
         system_call("mkdir ".$type_output."/tmp/pass2");
         system_call("STAR --genomeDir ".$star_index." --readFilesIn ".${$fastq{$type}}[0]." ".${$fastq{$type}}[1]." --runThreadN ".$thread.
-        " ".$zcat." --outFileNamePrefix ".$type_output."/tmp/pass1");
+          " ".$zcat." --outFileNamePrefix ".$type_output."/tmp/pass1");
         system_call("cd ".$type_output.";STAR --runMode genomeGenerate --genomeDir ".$type_output."/tmp/pass2 --genomeFastaFiles ".$index." --sjdbFileChrStartEnd ".
-        $type_output."/tmp/pass1SJ.out.tab --sjdbOverhang 75 --runThreadN ".$thread);
+          $type_output."/tmp/pass1SJ.out.tab --sjdbOverhang 100 --runThreadN ".$thread);
         system_call("STAR --genomeDir ".$type_output."/tmp/pass2 --readFilesIn ".${$fastq{$type}}[0]." ".${$fastq{$type}}[1]." --runThreadN ".$thread.
-        " ".$zcat." --outFileNamePrefix ".$type_output."/");
+          " ".$zcat." --outFileNamePrefix ".$type_output."/");
         system_call("mv ".$type_output."/Aligned.out.sam ".$type_output."/alignment.sam");
         unlink_file($type_output."/SJ.out.tab");
     }
@@ -336,10 +353,10 @@ sub alignment{
     }else # SureSelect deep sequencing
     {
       system_call("samtools view -H ".$type_output."/rgAdded.bam > ".$type_output."/header.sam");
-      system_call("java -Xmx200g -jar ".$locatit." -X ".$type_output."/tmp -PM:xm,Q:xq,q:nQ,r:nR,I:ni ".
+      system_call("java -Xmx15g -jar ".$locatit." -X ".$type_output."/tmp -PM:xm,Q:xq,q:nQ,r:nR,I:ni ".
         "-U -q 25 -m 1 -IB -OB -C -i -r -c 2500 -H ".$type_output."/header.sam ".
         "-o ".$type_output."/locatit.bam ".$type_output."/rgAdded.bam ".${$fastq{$type}}[0]." ".${$fastq{$type}}[1]);
-      system_call("sambamba sort --memory-limit=64GB --tmpdir=".$type_output."/tmp -o ".$type_output."/dupmark.bam -t ".$thread.
+      system_call("sambamba sort --memory-limit=15GB --tmpdir=".$type_output."/tmp -o ".$type_output."/dupmark.bam -t ".$thread.
         " -l 0 -u ".$type_output."/locatit.bam");
       system_call("sambamba index -t ".$thread." ".$type_output."/dupmark.bam");     
       unlink_file($type_output."/header.sam");
@@ -390,13 +407,13 @@ sub alignment{
     system_call("sambamba index -t ".$thread." ".$type_output."/".$type.".bam");    		
     #system_call("sambamba mpileup --tmpdir ".$type_output."/tmp -t ".$thread." --buffer-size=16000000000 ".		
     #  $type_output."/".$type.".bam --samtools \"-C 50 -f ".$index."\" > ".$type_output."/".$type.".mpileup");		
-    system_call("samtools mpileup -d 5000 -I -f ".$index." ".$type_output."/".$type.".bam > ".$type_output."/".$type.".mpileup");
+    system_call("samtools mpileup -d 7000 -I -f ".$index." ".$type_output."/".$type.".bam > ".$type_output."/".$type.".mpileup");
     if (-s $type_output."/".$type.".mpileup"<100000) {die "Error: mpileup has failed!\n";}		
 }		
 
 sub fun_mutect{
   if ($pdx=~/mouse/) {$known=" ";} else {$known=" --cosmic ".$resource_cosmic." ";}
-  system_call($java17." -Djava.io.tmpdir=".$mutect_tmp." -Xmx32g -jar ".$mutect." --analysis_type MuTect --reference_sequence ".$index.
+  system_call($java17." -Djava.io.tmpdir=".$mutect_tmp." -Xmx31g -jar ".$mutect." --analysis_type MuTect --reference_sequence ".$index.
     " --dbsnp ".$resource_dbsnp.$known." --input_file:tumor ".$tumor_bam." --input_file:normal ".$normal_bam.
     " --vcf ".$output."/mutect.vcf --out ".$output."/mutect.out");
 }
@@ -417,6 +434,9 @@ sub fun_speed_var_shimmer{
   system_call("shimmer.pl --minqual 25 --ref ".$index." ".$normal_bam." ".$tumor_bam." --outdir ".$output);
   system_call("perl ".$path."/somatic_script/add_readct_shimmer.pl ".$output."/som_counts.bh.txt ".$output."/somatic_diffs.vcf ".$output.
     "/somatic_diffs.readct.vcf");
+ 
+  # lumpy
+  system_call("lumpyexpress -B ".$normal_bam.",".$tumor_bam." -R ".$index." -o ".$output."/lumpy_sv.vcf.txt -T ".$output."/normal/lumpy_temp");
 }
 
 sub fun_strelka_lofreq{
@@ -442,7 +462,7 @@ sub fun_strelka_lofreq{
   system_call("rm -f -r ".$output."/manta"); 
 
   # run lofreq
-  system_call("lofreq call-parallel --pp-threads ".$thread." -s --sig 0.7 --bonf 1 -C 7 -f ".$index.
+  system_call("lofreq call-parallel --pp-threads ".$thread." -s --sig 0.1 --bonf 1 -C 7 -f ".$index.
     " -S ".$resource_dbsnp." --call-indels -l ".$index.".exon.bed -o ".$output."/lofreq_t.vcf ".$tumor_bam);
   system_call("lofreq call-parallel --pp-threads ".$thread." -s --sig 1 --bonf 1 -C 7 -f ".$index.
     " -S ".$resource_dbsnp." --call-indels -l ".$index.".exon.bed -o ".$output."/lofreq_n.vcf ".$normal_bam); 

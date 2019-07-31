@@ -10,7 +10,7 @@
 #              (2) if need to directly input bam files, use "bam path_to_bam.bam" in replace of the two corresponding fastq input files
 #              can be a mixture of fastq and bam input
 # thread: number of threads to use. Recommended: 32
-# index: path (including file name) to the human reference genome
+# index: path (including file name) to the human or mouse reference genome fasta file
 # somatic: somatic mutation calling output file. This is for adjusting CNV by somatic mutation VAF. Set to 1 to turn off this adjustment
 # output: the output folder, it will be deleted (if pre-existing) and re-created during analysis
 # need at least 128GB of memory
@@ -146,7 +146,6 @@ sub alignment{
     system_call("java -jar ".$picard." MarkDuplicates INPUT=".$type_output."/sort.bam OUTPUT=".$type_output."/".$type.".bam ".
         " CREATE_INDEX=true VALIDATION_STRINGENCY=STRICT REMOVE_SEQUENCING_DUPLICATES=true METRICS_FILE=".$type_output."/dupmark_metrics.txt");
     system_call("rm -f -r ".$type_output."/dupmark_metrics.txt");
-    system_call("mv ".$type_output."/dupmark.bai ".$type_output."/dupmark.bam.bai");
     unlink_file($type_output."/sort.bam");
 
     # generate final bam and mpileup files

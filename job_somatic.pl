@@ -4,7 +4,7 @@
 # The instructions must be followed exactly!!! 
 # input format:
 # jobs: the batch job design file, it has 6 columns separated by \t, the first four are fastq files or bam files (normal+tumor), 
-#       the fifth is the output folder, and the last is "PDX" or "". Commented lines ("#" at the front) are skipped
+#       the fifth is the output folder, and the last is "PDX" or "human" or "mouse". Commented lines ("#" at the front) are skipped
 # example: the demo job submission shell script. A default one is in this folder
 # thread,build,index,java17: follow those in somatic.pl
 # n: bundle $n somatic calling jobs into one submission

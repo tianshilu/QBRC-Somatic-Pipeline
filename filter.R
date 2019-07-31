@@ -1,6 +1,6 @@
 # you may modify the following codes to suit some special needs
 # need the corrplot, NMF, maftools, gplots, ape, and phangorn R packages
-# best use R>=3.4.0
+# best use R>=3.4.0. Can be executed from Rstudio or Rscript, but not in plain R console
 
 # exclude TG/PDX samples from this analysis
 # strongly recommend NOT to add un-matched mutation calling results to this analysis.
@@ -12,7 +12,7 @@
 
 # the second argument is the output folder to place all filtering results
 
-# the third argument is the reference genome build, hg38, hg19, etc
+# the third argument is the reference genome build, hg38, hg19, mm10
 
 # the fourth argument is the path to the reference genome file
 
@@ -43,16 +43,31 @@ refBuild=args[3]
 ref_genome=args[4]
 min_tumor_vaf=as.numeric(args[5])
 filter_long=args[6]=="TRUE"
+
+if (Sys.getenv("RSTUDIO") == "1")
+{
+  library(rstudioapi)
+  scriptPath=dirname(rstudioapi::getSourceEditorContext()$path)
+}else
+{
+  args=commandArgs(trailingOnly = F)
+  scriptPath=normalizePath(dirname(sub("^--file=", "", args[grep("^--file=", args)])))
+}
+source(paste(scriptPath,"/somatic_script/filter_functions.R",sep=""))
+
+cosmic_genes=read.csv(paste(scriptPath,"/somatic_script/cancer_gene_census.csv",sep=""),row.names=1,
+                      stringsAsFactors = F)
+
 long_genes=c("TTN","KCNQ1OT1","MUC16","ANKRD20A9P","TSIX","SYNE1","ZBTB20","OBSCN",
   "SH3TC2","NEB","MUC19","MUC4","NEAT1","SYNE2","CCDC168","AAK1","HYDIN","RNF213",      
   "LOC100131257","FSIP2","MUC5B")  
 
 design=read.table(design,stringsAsFactors = F,header=T)
+design=design[!duplicated(design),]
 if (colnames(design)[1]!="sample_id") 
   {stop("Error: Did you forgot the column headers for the design file?")}
 design=design[order(design$patient_id,design$sample_id),]
 if (!file.exists(path)) {dir.create(path)}
-if (!file.exists(paste(path,"/each",sep=""))) {dir.create(paste(path,"/each",sep=""))}
 
 ########  check parental origin (for sample mislabeling)  ##################
 
@@ -66,7 +81,8 @@ if (any(is.na(design$patient_id)))
   for (i in 1:dim(design)[1])
   {
     file=paste(design$folder[i],"/germline_mutations_",refBuild,".txt",sep="")
-    tmp=read.table(file, stringsAsFactors = F,sep="\t",header = T)
+    tmp=read.table(file, stringsAsFactors = F,sep="\t",header = T,
+                   colClasses=c("Ref"="character","Alt"="character"))
     mutations[[design$sample_id[i]]]=paste(tmp$Chr,tmp$Start,tmp$Ref,tmp$Alt)
   }
   
@@ -98,7 +114,8 @@ for (i in 1:dim(design)[1])
 {
   # read data
   file=paste(design$folder[i],"/somatic_mutations_",refBuild,".txt",sep="")
-  tmp=read.table(file,stringsAsFactors = F,sep="\t",header = T)
+  tmp=read.table(file,stringsAsFactors = F,sep="\t",header = T,
+                 colClasses=c("Ref"="character","Alt"="character"))
   tmp$sample_id=design$sample_id[i]
   tmp$patient_id=design$patient_id[i]
   
@@ -106,6 +123,8 @@ for (i in 1:dim(design)[1])
   tmp=tmp[tmp$Tumor_alt/(tmp$Tumor_alt+tmp$Tumor_ref)>=min_tumor_vaf,]
   tmp=tmp[tmp$Func.refGene %in% c("exonic","exonic;splicing","splicing;exonic","splicing"),] # UTR or coding regions
   tmp=tmp[tmp$ExonicFunc.refGene!="synonymous SNV",] # non-S mutations
+  if (dim(tmp)[1]==0) {next}
+  if (!"SIFT_pred" %in% colnames(tmp)) {tmp$SIFT_pred=tmp$Polyphen2_HVAR_pred="."} # mouse
   tmp=tmp[!(tmp$SIFT_pred=="T" & tmp$Polyphen2_HVAR_pred=="B"),] # damaging missense mutations
   genes=table(tmp$Gene.refGene) # too many mutations on the same gene
   tmp=tmp[tmp$Gene.refGene %in% names(genes)[genes<=4],]
@@ -126,15 +145,8 @@ mutations=mutations[!mutations$mutation %in% names(artefact),]
 ###########  write results  ###############
 
 # all mutations
-for (i in 1:dim(mutations)[1]) # newer versions of annovar do not label fs mutations completely
-{
-  annotations=strsplit(mutations$AAChange.refGene[i],",")[[1]]
-  mutations$AAChange.refGene[i]=paste(sapply(strsplit(annotations,":"),function(x) {
-    if (substr(x[length(x)],1,2)!="p.") {x=c(x,"p.X0X")}
-    paste(x,collapse=":")
-  }),collapse=",")
-}
-write.csv(mutations,file=paste(path,"/all_mutations.csv",sep=""),row.names = F)
+cosmic_role=cosmic_genes$Role.in.Cancer[match(tolower(mutations$Gene.refGene),tolower(rownames(cosmic_genes)))]
+write.csv(cbind(mutations,cosmic_role),file=paste(path,"/all_mutations.csv",sep=""),row.names = F)
 
 tmp=mutations[,c("Chr","Start","End","Ref","Alt","Gene.refGene","ExonicFunc.refGene",
                  "AAChange.refGene","sample_id","Func.refGene")]
@@ -161,6 +173,7 @@ samples=unique(mutations$sample_id)
 sum_mut=matrix("",nrow=length(genes),ncol=length(samples))
 rownames(sum_mut)=genes
 colnames(sum_mut)=samples
+
 for (i in 1:dim(mutations)[1])
 {
   x=strsplit(mutations$Gene.refGene[i],";")[[1]]
@@ -168,106 +181,89 @@ for (i in 1:dim(mutations)[1])
   z=paste(mutations$Func.refGene[i],mutations$ExonicFunc.refGene[i],sep=" ")
   sum_mut[x,y]=sub("^;","",paste(sum_mut[x,y],z,sep=";"),perl=T)
 }
-write.csv(sum_mut,file=paste(path,"/summary_mutations_details.csv",sep=""))
-write.csv(1*(sum_mut!=""),file=paste(path,"/summary_mutations.csv",sep=""))
 
-pdf(file=paste(path,"/mutations_heatmap.pdf",sep=""),width=dim(sum_mut)[2]/2,height=dim(sum_mut)[1]/40)
-tmp=1-1*(sum_mut!="")
-tmp=tmp[apply(tmp,1,mean)<0.9,]
-tmp=tmp[order(apply(tmp,1,mean)),]
-heatmap.2(tmp,Rowv=F,Colv=F,dendrogram="none",trace="none",srtCol=45,density.info="none")
-dev.off()
+cosmic_role=cosmic_genes$Role.in.Cancer[match(tolower(rownames(sum_mut)),tolower(rownames(cosmic_genes)))]
+write.csv(cbind(cosmic_role,sum_mut),file=paste(path,"/summary_mutations_details.csv",sep=""))
+write.csv(cbind(cosmic_role,1*(sum_mut!="")),file=paste(path,"/summary_mutations.csv",sep=""))
 
-for (sample in unique(mutations$sample_id))
-{
-  mutations_sample=mutations[mutations$sample_id==sample,]
-  write.csv(mutations_sample,file=paste(path,"/each/",sample,".csv",sep=""),row.names = F)
-  write.table(mutations_sample[,!colnames(mutations_sample) %in% c("sample_id","patient_id","mutation")],
-    file=paste(path,"/each/",sample,".txt",sep=""),row.names = F,sep="\t",quote=F)
+# plot heatmap
+tryCatch({
+  tmp <-sum_mut
+  tmp=tmp[apply(tmp!="",1,sum)/dim(tmp)[2]>0.05,]
+  tmp=tmp[tolower(rownames(tmp)) %in% tolower(rownames(cosmic_genes)),]
+  tmp=tmp[order(-apply(tmp!="",1,sum)),]
+  percentages=paste(" (",round(apply(tmp!="",1,sum)/dim(tmp)[2]*100,d=1),"%)",sep="")
+  rownames(tmp)=paste(rownames(tmp),percentages)
   
-  mutations_sample$"#CHROM"=mutations_sample$Chr
-  mutations_sample$"POS"=mutations_sample$Start
-  mutations_sample$"ID"="."
-  mutations_sample$"REF"=mutations_sample$Ref
-  mutations_sample$"ALT"=mutations_sample$Alt
-  mutations_sample$"QUAL"="."
-  mutations_sample$"FILTER"="PASS"
-  mutations_sample$"INFO"="."
-  mutations_sample$"FORMAT"="RD:AD"
-  mutations_sample$"NORMAL"=paste(ceiling(mutations_sample$Normal_ref),
-                                  ceiling(mutations_sample$Normal_alt),sep=":")
-  mutations_sample$"TUMOR"=paste(ceiling(mutations_sample$Tumor_ref),
-                                 ceiling(mutations_sample$Tumor_alt),sep=":")
-  write.table(mutations_sample[,c("#CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO",
-    "FORMAT","NORMAL","TUMOR")],file=paste(path,"/each/",sample,".vcf",sep=""),row.names = F,
-    sep="\t",quote=F)
-}
+  pdf(file=paste(path,"/mutations_heatmap_cosmic.pdf",sep=""),
+      width=max(dim(tmp)[2]/6+4,8),height=max(dim(tmp)[1]/10+5,8))
+  pat_id=design$patient_id[match(colnames(sum_mut),design$sample_id)]
+  
+  tmp[tmp==""]<-0
+  tmp[tmp=="exonic nonsynonymous SNV"]<-1
+  tmp[tmp=="exonic frameshift substitution"]<-2
+  tmp[tmp=="exonic stopgain"]<-3
+  tmp[tmp=="exonic nonframeshift substitution"]<-4
+  tmp[tmp=="splicing ."]<-5
+  tmp[tmp=="exonic unknown"]<-6
+  tmp[tmp=="exonic stoploss"]<-7
+  tmp[!(tmp <= 8 )]<-8  #please change
+  tmp=as.data.frame(tmp,stringsAsFactors=F)
+  for (i in 1:dim(tmp)[2]) {tmp[,i]=as.numeric(tmp[,i])}
+  tmp=as.matrix(tmp)
+  
+  breaks = c(-0.5,0.5,1.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5)
+  col= c("gray", "red", "blue", "green", "cyan", "gold", "orchid", "plum","black")
+  heatmap.2(tmp,breaks=breaks,col=col,lmat=rbind( c(4,5,2), c(6,1,3) ), key=F, extrafun=myplot, 
+            Rowv=F,Colv=F,dendrogram="none",trace="none",srtCol=45,density.info="none",  
+            colsep=which(pat_id[-1]!=pat_id[-length(pat_id)]),sepwidth=c(0.03,0.3),
+            sepcolor="white", lhei=c(1,dim(tmp)[1]/10), lwid=c(1,6,1), keysize=1, 
+            key.par = list(cex=0.5), cexRow= 0.8,cexCol = 0.8)
+  dev.off()
+},error=function(e) {print("Not plotting heatmap!")})
 
 ##########  plotting  ###################
 
 # phylo tree
-pdf(file=paste(path,"/phylo_tree.pdf",sep=""),width=6,height=6)
-tmp=table(design$patient_id)
-phylo_tree_pats=names(tmp[tmp>=3])
-
-for (phylo_tree_pat in phylo_tree_pats)
-{
-  # extract mutation data
-  mutations_pat=mutations[mutations$patient_id==phylo_tree_pat,]
-  mutations_pat$vaf=mutations_pat$Tumor_alt/(mutations_pat$Tumor_alt+mutations_pat$Tumor_ref)
-  mutations_mat=matrix(0,ncol=length(unique(mutations_pat$mutation)),
-                       nrow=length(unique(mutations_pat$sample_id)))
-  colnames(mutations_mat)=unique(mutations_pat$mutation)
-  rownames(mutations_mat)=unique(mutations_pat$sample_id)
-  for (i in 1:dim(mutations_pat)[1]) 
-    {mutations_mat[mutations_pat$sample_id[i],mutations_pat$mutation[i]]=mutations_pat$vaf[i]}
-  
-  # transform
-  mutations_mat=rbind(mutations_mat[1,],mutations_mat)
-  rownames(mutations_mat)[1]="Normal"
-  mutations_mat[1,]=0
-  mutations_mat=t(mutations_mat)
-  
-  # plot
-  vaf=mutations_mat
-  thr = 0.05
-  vaf_bin <- vaf
-  vaf_bin[vaf>=thr] <- 1
-  vaf_bin[vaf<thr] <- 0
-  vaf_bin <- as.data.frame(vaf_bin)
-  phydat <- phyDat(vaf_bin,type="USER",levels=c(0,1))
-  partree <- pratchet(phydat,trace = F)
-  partree <- acctran(partree,phydat)
-  tree <- as.phylo(partree)
-  plot.phylo(tree,main=phylo_tree_pat,
-             type = "unrooted",direction = "rightwards",edge.width = 3,cex = 1.2)
-  # g_undir <- as.igraph(tree,directed = F)
-  # tips <- tree$tip.label
-  # node_name <- names(V(g_undir))
-  # 
-  # node <- seq_along(tips)
-  # normal <-  match(tips[match("Normal",tips)],names(V(g_undir)))
-  # subclone <- match(tips[-match("Normal",tips)],names(V(g_undir)))
-  # in_node <- (1:length(node_name))[-c(normal,subclone)]
-  # vpath <- sapply(subclone,function(x)get.shortest.paths(g_undir,normal,x)$vpath)
-  # 
-  # edge_list <- vector("list",length(vpath))
-  # for(i in seq_along(vpath)){
-  #   current_path <- as.numeric(vpath[[i]])
-  #   edge <- matrix(NA,nrow=length(current_path)-1,ncol=2)
-  #   for(j in 1:nrow(edge)){
-  #     edge[j,] <- current_path[c(j,j+1)]
-  #   }
-  #   edge_list[[i]] <- edge
-  # }
-  # edge <- unique(do.call(rbind,edge_list))
-  # g_dir <- graph.edgelist(edge,directed=T)
-  # vertex.attributes(g_dir)$name <- rep("",length(node_name))
-  # vertex.attributes(g_dir)$name[c(normal,subclone)] <- node_name[c(normal,subclone)]
-  # vertex.attributes(g_dir)$name[-c(normal,subclone)] <- node_name[-c(normal,subclone)]
-  # plot(g_dir, layout = layout.reingold.tilford(g_dir, root = normal))
-}
-dev.off()
+# pdf(file=paste(path,"/phylo_tree.pdf",sep=""),width=6,height=6)
+# tmp=table(design$patient_id)
+# phylo_tree_pats=names(tmp[tmp>=3])
+# 
+# for (phylo_tree_pat in phylo_tree_pats)
+# {
+#   # extract mutation data
+#   mutations_pat=mutations[mutations$patient_id==phylo_tree_pat,]
+#   mutations_pat$vaf=mutations_pat$Tumor_alt/(mutations_pat$Tumor_alt+mutations_pat$Tumor_ref)
+#   mutations_pat$vaf=mutations_pat$vaf/quantile(mutations_pat$vaf,0.8)
+#   mutations_pat$vaf[mutations_pat$vaf>1]=1
+#   mutations_mat=matrix(0,ncol=length(unique(mutations_pat$mutation)),
+#                        nrow=length(unique(mutations_pat$sample_id)))
+#   colnames(mutations_mat)=unique(mutations_pat$mutation)
+#   rownames(mutations_mat)=unique(mutations_pat$sample_id)
+#   for (i in 1:dim(mutations_pat)[1])
+#     {mutations_mat[mutations_pat$sample_id[i],mutations_pat$mutation[i]]=mutations_pat$vaf[i]}
+# 
+#   # transform
+#   mutations_mat=rbind(mutations_mat[1,],mutations_mat)
+#   rownames(mutations_mat)[1]="Normal"
+#   mutations_mat[1,]=0
+#   mutations_mat=t(mutations_mat)
+# 
+#   # plot
+#   vaf=mutations_mat
+#   thr = 0.05
+#   vaf_bin <- vaf
+#   vaf_bin[vaf>=thr] <- 1
+#   vaf_bin[vaf<thr] <- 0
+#   vaf_bin <- as.data.frame(vaf_bin)
+#   phydat <- phyDat(vaf_bin,type="USER",levels=c(0,1))
+#   partree <- pratchet(phydat,trace = F)
+#   partree <- acctran(partree,phydat)
+#   tree <- as.phylo(partree)
+#   plot.phylo(tree,main=phylo_tree_pat,
+#              type = "unrooted",direction = "rightwards",edge.width = 3,cex = 1.2)
+# }
+# dev.off()
 
 # get data into maf format
 laml=annovarToMaf(annovar=paste(path,"/all_mutations.txt",sep=""),refBuild)
@@ -296,28 +292,16 @@ oncoplot(maf = laml, top = 50, removeNonMutated = TRUE)
 dev.off()
 
 # lollipop plot
-# disabled for now, AAchange annotations are not correct
-#dir=paste(path,"/lollipop",sep="")
-#if (!file.exists(dir)) {dir.create(file.path(dir))}
-#for (gene in getGeneSummary(laml)$Hugo_Symbol[1:20])
-#{
-#  pdf(file=paste(path,"/lollipop/",gene,".pdf",sep=""), width=10, height=3)
-#  tryCatch({lollipopPlot(maf = laml, gene = gene, AACol = 'AAChange',labelPos="all")},
-#    error=function(e) 1)
-#  dev.off()
-#}
-
-#plot for gene cloud
-pdf(file=paste(path,"/genecloud.pdf",sep=""), width=10, height=10)
-geneCloud(input = laml, minMut = 5)
-dev.off()
-
-# identify significantly driver genes by maftools
-# results maybe problematic, as it used AAChange for now.
-#laml.sig = oncodrive(maf = laml, AACol = 'AAChange', minMut = 5, pvalMethod = 'zscore')
-#pdf(file=paste(path,"/driver.pdf",sep=""), width=4, height=4)
-#plotOncodrive(res = laml.sig, fdrCutOff = 0.1, useFraction = TRUE)
-#dev.off()
+dir=paste(path,"/lollipop",sep="")
+if (!file.exists(dir)) {dir.create(file.path(dir))}
+for (gene in getGeneSummary(laml)$Hugo_Symbol[1:30])
+{
+ pdf(file=paste(path,"/lollipop/",gene,".pdf",sep=""), width=10, height=3)
+ tryCatch({lollipopPlot(maf = laml, gene = gene, AACol = 'AAChange',labelPos="all",repel=T,
+  labPosAngle=45,domainLabelSize=1.5,printCount=T)},
+   error=function(e) 1)
+ dev.off()
+}
 
 #somatic signature analysis
 laml.tnm = trinucleotideMatrix(maf = laml, ref_genome,  ignoreChr=NULL, useSyn = TRUE)

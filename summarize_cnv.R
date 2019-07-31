@@ -2,14 +2,14 @@
 # you may modify the following codes to suit some special needs
 
 # the first argument is the path to the CNV design file 
-# it is a tab-delimited file, with two columns: sample_id, folder
+# it is a tab-delimited file, with two columns: sample_id, folder (colnames needed in the file)
 # folder is the path to the CNV calling folder 
 
 # the second argument is the output folder
 
-# the third argument is the folder to the reference genome files
+# the third argument is the folder to the human or mouse reference genome files
 
-# Rscript plot_cnv.R ./example/cnv_design.txt ./example/cnv_summarization 
+# Rscript summarize_cnv.R ./example/cnv_design.txt ./example/cnv_summarization 
 #   /home2/twang6/data/genomes/hg38/
 
 #########  prepare  ################
@@ -23,8 +23,9 @@ if (!file.exists(args[2])) {dir.create(args[2])}
 
 chrom_size_file=list.files(args[3],pattern="chrom.sizes.txt",full.names = T)
 ch_size=read.table(chrom_size_file,stringsAsFactors = F,row.names = 1)
-#ch_size=ch_size[paste("chr",c(1:22,"X","Y"),sep=""),,drop=F]
-ch_size=ch_size[paste("chr",c(1:22),sep=""),,drop=F]
+chrs=paste("chr",c(1:100),sep="")
+chrs=chrs[chrs %in% rownames(ch_size)]
+ch_size=ch_size[chrs,,drop=F]
 colnames(ch_size)="len"
 ch_size$len=ch_size$len/1.0
 ch_size$cumulative_len=ch_size$len[1]
