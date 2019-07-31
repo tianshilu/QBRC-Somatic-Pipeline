@@ -95,13 +95,13 @@ somatic_design.txt example (5 columns; columns seperated by tab):\
 perl ~/somatic/job_somatic.pl somatic_design.txt ~/somatic/example/example.sh 32 hg38 ~/ref/hg38/hs38d1.fa /cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java 2
 ```
 ### Note:
-"design.txt" is the batch job design file. It has 6 columns separated by '\t', the first four slots are fastq files or bam files for normal and tumor samples. The fifth is the output folder, and the last is "PDX" or "human". 
-"example_file" is the demo job submission shell script. A default one is in example/. 
-"thread": number of threads to use. Recommended: 32 
-"build": genome build, hg19 or hg38. 
-"index": path (including file names) to the reference genome in the reference bundle. 
-"java17": path (including the executable file name) to java 1.7 (needed only for MuTect). 
-"n": bundle $n somatic calling job into one submission.
+* design.txt: the batch job design file. It has 6 columns separated by '\t', the first four slots are fastq files or bam files for normal and tumor samples. The fifth is the output folder, and the last is "PDX" or "human". 
+* example_file : the demo job submission shell script. A default one is in example/. 
+* thread : number of threads to use. Recommended: 32 
+* build : genome build, hg19 or hg38. 
+* index : path (including file names) to the reference genome in the reference bundle. 
+* java17 : path (including the executable file name) to java 1.7 (needed only for MuTect). 
+* n : bundle $n somatic calling job into one submission.
 ## filter.R
 Post-processing script for somatic mutations for a batch of sampels.
 ### Command
