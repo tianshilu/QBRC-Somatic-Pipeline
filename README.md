@@ -104,18 +104,18 @@ perl ~/somatic/job_somatic.pl somatic_design.txt ~/somatic/example/example.sh 32
 * n : bundle $n somatic calling job into one submission.
 ## filter.R
 Post-processing script for somatic mutations for a batch of sampels.
-### Command
-Rscript filter.R 
-design.txt 
-output build index VAF_cutoff filter
-Note:
-"design.txt": tab-delimited file with three columns: sample_id, patient_id, output folder. 
-"output": the output folder to place all filtering results. 
-"build": the reference genome build, hg38, hg19 etc. 
-"index": the path to the reference genome file in the reference bundle. 
-"VAF_cutoff": the minimum VAF of the mutations in the tumor sample (recommended: 0.001-0.05). 
-"filter": TRUE or FALSE. Whether to filter out extremely long genes in the list "TTN","KCNQ1OT1","MUC16","ANKRD20A9P","TSIX","SYNE1","ZBTB20","OBSCN", "SH3TC2","NEB","MUC19","MUC4","NEAT1","SYNE2","CCDC168","AAK1","HYDIN","RNF213","LOC100131257","FSIP2". These genes usually turn out ot have somatic muitations in any cohort of patients. Default is FALSE.\
-filter_design.txt example (3 columns; columns seperated by tab; header): 
+### Usage
+```
+Rscript filter.R  design.txt output build index VAF_cutoff filter
+```
+### Note:
+* design.txt : tab-delimited file with three columns: sample_id, patient_id, output folder. 
+* output : the output folder to place all filtering results. 
+* build : the reference genome build, hg38, hg19 etc. 
+* index : the path to the reference genome file in the reference bundle. 
+* VAF_cutoff : the minimum VAF of the mutations in the tumor sample (recommended: 0.001-0.05). 
+* filter : TRUE or FALSE. Whether to filter out extremely long genes in the list "TTN","KCNQ1OT1","MUC16","ANKRD20A9P","TSIX","SYNE1","ZBTB20","OBSCN", "SH3TC2","NEB","MUC19","MUC4","NEAT1","SYNE2","CCDC168","AAK1","HYDIN","RNF213","LOC100131257","FSIP2". These genes usually turn out ot have somatic muitations in any cohort of patients. Default is FALSE.\
+## filter_design.txt example (3 columns; columns seperated by tab; header): 
 sample_id patient_id folder 
 1799-01 pat-01 ~/filter/1799-01/ 
 1799-02 pat-02 ~/filter/1799-02/ 
@@ -137,11 +137,16 @@ sequencing_file_4
 thread index somatic_mutation_result output
 ```
 ### Note:
-prerequisite in path: R; BWA; sambamba; perl (Parallel::ForkManager); samtools (version>=1.6); cnvkit; fastqc Input seuqencing files: (1) If input are fastq files, they must be 'gz' files. 'sequencing_file_1', 'sequencing_file_2' are path to fastq1 and fastq2 of normal sample; 'sequencing_file_3', 'sequencing_file_4' are path to fastq1 and fastq2 of tumor samples. (2) If input are bam files, use "bam /path/to/bam/files.bam" in replace of the tow corresponding fastq input files. 
-"thread": number of threads to use. Recommended: 32 
-"index": the path to the reference genome file in the reference bundle. 
-"somatic_mutation_result": somatic mutation calling output file. THis is for adjusting CNV by somatic mutation VAF. Set to 1 to turn off this adjustment. 
-"output":the output folder. it will be deleted (if pre-existing) adn re-created during analysis. 
+* prerequisite in path: R; BWA; sambamba; perl (Parallel::ForkManager); samtools (version>=1.6); cnvkit; 
+* fastqc Input seuqencing files: 
+  * (1) If input are fastq files, they must be 'gz' files. 
+  * 'sequencing_file_1', 'sequencing_file_2' are path to fastq1 and fastq2 of normal sample; 
+  * 'sequencing_file_3', 'sequencing_file_4' are path to fastq1 and fastq2 of tumor samples. 
+  * (2) If input are bam files, use "bam /path/to/bam/files.bam" in replace of the tow corresponding fastq input files. 
+* thread : number of threads to use. Recommended: 32 
+* index : the path to the reference genome file in the reference bundle. 
+* somatic_mutation_result": somatic mutation calling output file. THis is for adjusting CNV by somatic mutation VAF. Set to 1 to turn off this adjustment. 
+* output :the output folder. it will be deleted (if pre-existing) adn re-created during analysis. 
 The CNV calling needs at least 128GB of memory.
 ### Example
 ```
