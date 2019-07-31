@@ -25,13 +25,13 @@ bowtie2 (version>= 2.3.4.3, for Patient Derived Xenograft models)
 ## Input files
 Input can be fastq files or bam files or a mixture of fastq and bam files.
 ## Main procedures:
-Genome Alignment
+Genome Alignment:  
 Genome sequencing files are aligned to the human reference genome by BWA-MEM (Please contact Tianshi.Lu@UTSouthwestern.edu for genome reference files). Picard was used to add read group information and sambamba was used to mark PCR duplilcates. GATK toolkt was used to perform base quality score relcalibration adn local realignment around Indels.
-Variant Calling
+Variant Calling:  
 MuTect, VarScan Shimmer, SpeedSeq, Manta, and Strelka2 were used to call SNPs and Indels. A mutation that was repeatedly called by any two of these softwares was retained.
-Mutation Annotation
+Mutation Annotation:  
 Annovar was used to annotate SNPs, and Indels and protein sequence changes. Somatic mutations and germline mutations were annotated according to the mutation allele frequencies in the normal and tumor samples.
-Filter False Mutations
+Filter False Mutations:  
 All SNPs and Indels were combined ony kept if there were at least 7 total( wild type and variant) reads in the normal sample and at least 3 variant reads in the tumor sample. Variants with allele frequency more than 2 times allele frequency of the according normal allele are kept. Variants with allele frequency less than 5% in background sample are kept.
 ## Guided Tutorial
 ## somatic.pl
@@ -70,12 +70,12 @@ Input seuqencing files:
 (5) For tumor-only calling, put "NA NA" in the first two slots. Results will be written to germline output files.  
 (6) Optional: run somatic_script/SurecallTrummer.jar on the fastq files before runnign somatic.pl for deep seuquencing files.  
 (7) If only single end fastq data are available, put the fastq file(s) at the first and/or the third slots, then put NA in the second and/or fourth slot.  
-"thread": number of threads to use.  
-"build": genome build, hg19 or hg38.  
-"index": path (including file names) to the reference genome fasta file of the reference bundle hg38 or hg19. (The pipeline will search for other files in that bundle folder automatically.)  
-"java17": path (including the executable file name) to java 1.7 (needed only for MuTect).  
-"ouput": the output folder, it will be deleted (if pre-existing) adn re-created during analysis.  
-"pdx": "PDX" or "human" if this is PDX sample, reads will be aligned to mouse genome first. And unmapped reads will be mapped to the human genome.  
+* thread : number of threads to use.  
+* build : genome build, hg19 or hg38.  
+* index : path (including file names) to the reference genome fasta file of the reference bundle hg38 or hg19. (The pipeline will search for other files in that bundle folder automatically.)  
+* java17 : path (including the executable file name) to java 1.7 (needed only for MuTect).  
+* output : the output folder, it will be deleted (if pre-existing) adn re-created during analysis.  
+* pdx : "PDX" or "human" if this is PDX sample, reads will be aligned to mouse genome first. And unmapped reads will be mapped to the human genome.  
 (4) Example data to run the QBRC somatic mutation pipeline can be found at https://github.com/Somatic-pipeline/QBRC-Somatic-Pipeline/tree/master/example/example_dataset/sequencing. The output for the example data can be found at https://github.com/Somatic-pipeline/QBRC-Somatic-Pipeline/tree/master/example/example_dataset/example_output.
 ## job_somatic.pl
 Slurm wrapper for somatic.pl for a batch of sampels and it is easy to change for other job scheduler system by revising this line of code: "system("sbatch ".$job)" and using proper demo job submission shell script.
