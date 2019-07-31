@@ -1,5 +1,5 @@
 # The QBRC somatic mutation calling pipeline
-![preview](https://github.com/Somatic-pipeline/Somatic-pipeline/blob/master/qbrc.jpeg)
+![preview](https://github.com/tianshilu/QBRC-Somatic-Pipeline/blob/master/somatic_flow.jpg)
 ## Introduction
 The QBRC mutation calling pipeline is a flexible and comprehensive pipeline for mutation calling that has glued together a lot of commonly used software and data processing steps for mutation calling. The mutation calling software include: sambamba, speedseq, varscan, shimmer, strelka, manta, lofreq_tar. It identifies somatic and germline variants from whole exome sequencing (WXS), RNA sequencing and deep sequencing data. It can be used for human, PDX, and mouse data (fastq files or bam files as input). Please refer to https://qbrc.swmed.edu/labs/wanglab/index.php for more information. If you used our pipeline in your publication, please cite our paper ["Neoantigen Clonal Balance Predicts Response to Checkpoint Inhibitor"] (under review) and please refer to https://github.com/Somatic-pipeline/QBRC-Somatic-Pipeline/blob/master/Liscense.txt for liscence information.
 ## Running time
