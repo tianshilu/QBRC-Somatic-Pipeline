@@ -19,15 +19,21 @@ as_numeric<-function(x)
   x
 }
 
-if ("cosmic70" %in% colnames(annotations)) # human/PDX sample
+# human/PDX sample
+if ("cosmic70" %in% colnames(annotations))
 {
   suppressWarnings({annotations$cosmic70=as_numeric(annotations$cosmic70)})
   suppressWarnings({annotations$esp6500siv2_all=as_numeric(annotations$esp6500siv2_all)})
   suppressWarnings({annotations$ExAC_ALL=as_numeric(annotations$ExAC_ALL)})
   suppressWarnings({annotations$X1000g2015aug_all=as_numeric(annotations$X1000g2015aug_all)})
-  annotations=annotations[annotations$esp6500siv2_all<0.01,]
-  annotations=annotations[annotations$ExAC_ALL<0.01,]
-  annotations=annotations[annotations$X1000g2015aug_all<0.01,]
+  
+  if (args[4]=="somatic") # only do this filtering for somatic mutations
+  {
+    annotations=annotations[annotations$esp6500siv2_all<0.01,]
+    annotations=annotations[annotations$ExAC_ALL<0.01,]
+    annotations=annotations[annotations$X1000g2015aug_all<0.01,] 
+  }
+  
   effect_field=c("SIFT_pred","Polyphen2_HVAR_pred","cosmic70","esp6500siv2_all",
                  "ExAC_ALL","X1000g2015aug_all")
 }else
