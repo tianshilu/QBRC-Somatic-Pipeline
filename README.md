@@ -39,8 +39,7 @@ The code for somatic and germline mutation calling for a pair of normal and tumo
 
 ### Usage
 ```
-perl /Path/to/somatic.pl <normal_fastq1> <normal_fastq2/NA> <tumor_fastq1> <tumor_fastq2/NA> \ 
-<thread> <build> <index> <java17> </Path/to/output> <pdx>
+perl /Path/to/somatic.pl <normal_fastq1> <normal_fastq2/NA> <tumor_fastq1> <tumor_fastq2/NA> <thread> <build> <index> <java17> </Path/to/output> <pdx>
 ```
 * fastq files:  
   * fastq1 and fastq2 of normal sample, fastq1 and fastq2 of tumor sample (must be .gz) default input is full path to the 4 fastq files for tumor and normal samples.  
@@ -174,7 +173,10 @@ Summarizing script for CNV and quality check callings for a batch of samples.
 ### Command
 ```
 Rscript summarize_cnv.R design.txt output index
-cnv_sum_design.txt example (2 columns; columns seperated by tab; header): 
+```
+### cnv_sum_design.txt example 
+(2 columns; columns seperated by tab; header): 
+```
 sample_id folder 
 1799-01 ~/cnv_result/1799-01 
 1799-02 ~/cnv_result/1799-02 
