@@ -81,14 +81,14 @@ Input seuqencing files:
 Slurm wrapper for somatic.pl for a batch of sampels and it is easy to change for other job scheduler system by revising this line of code: "system("sbatch ".$job)" and using proper demo job submission shell script.
 ### Command
 ```
-perl /Directory/to/folder/of/code/job_somatic.pl 
-design.txt 
-example_file 
-thread build index java17 n\
-somatic_design.txt example (5 columns; columns seperated by tab):\
+perl /Directory/to/folder/of/code/job_somatic.pl design.txt example_file thread build index java17 
+```
+### somatic_design.txt example 
+(5 columns; columns seperated by tab):
+```
 ~/seq/1799-01N.R1.fastq.gz ~/seq/1799-01N.R2.fastq.gz ~/seq/1799-01T.R1.fastq.gz ~/seq/1799-01T.R2.fastq.gz ~/out/1799-01/ human \
 ~/seq/1799-02N.R1.fastq.gz ~/seq/1799-02N.R2.fastq.gz ~/seq/1799-02T.R1.fastq.gz ~/seq/1799-02T.R2.fastq.gz ~/out/1799-02/ human \
-~/seq/1799-03N.R1.fastq.gz ~/seq/1799-03N.R2.fastq.gz ~/seq/1799-03T.R1.fastq.gz ~/seq/1799-03T.R2.fastq.gz ~/out/1799-03/ human 
+~/seq/1799-03N.R1.fastq.gz ~/seq/1799-03N.R2.fastq.gz ~/seq/1799-03T.R1.fastq.gz ~/seq/1799-03T.R2.fastq.gz ~/out/1799-03/ human
 ```
 ### Command example
 ```
@@ -156,10 +156,11 @@ perl ~/somatic/cnv.pl ~/seq/1799-01N.R1.fastq.gz ~/seq/1799-01N.R2.fastq.gz ~/se
 Slurm wrapper for cnv.pl for a batch of samples and it is easy to change for other job scheduler system by revising this line of code: "system("sbatch ".$job)" and using proper demo job submission shell script.
 ### Command
 ```
-perl job_cnv.pl 
-design.txt 
-example.sh thread index n\
-cnv_design.txt example (6 columns; columns seperated by tab): 
+perl job_cnv.pl design.txt example.sh thread index 
+```
+### cnv_design.txt example 
+(6 columns; columns seperated by tab): 
+```
 ~/seq/1799-01N.R1.fastq.gz ~/seq/1799-01N.R2.fastq.gz ~/seq/1799-01T.R1.fastq.gz ~/seq/1799-01T.R2.fastq.gz ~/somatic_result/1799-01/somatic_mutations_hg38.txt ~/cnv_result/1799-01/ 
 ~/seq/1799-02N.R1.fastq.gz ~/seq/1799-02N.R2.fastq.gz ~/seq/1799-02T.R1.fastq.gz ~/seq/1799-02T.R2.fastq.gz ~/somatic_result/1799-02/somatic_mutations_hg38.txt ~/cnv_result/1799-02/ 
 ~/seq/1799-03N.R1.fastq.gz ~/seq/1799-03N.R2.fastq.gz ~/seq/1799-03T.R1.fastq.gz ~/seq/1799-03T.R2.fastq.gz ~/somatic_result/1799-03/somatic_mutations_hg38.txt ~/cnv_result/1799-03/
