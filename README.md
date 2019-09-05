@@ -55,10 +55,11 @@ perl /Path/to/somatic.pl <normal_fastq1> <normal_fastq2/NA> <tumor_fastq1> <tumo
 * java17: path (including the executable file name) to java 1.7 (needed only for mutect)  
 * output: the output folder, it will be deleted (if pre-existing) and re-created during analysis  
 * pdx: "PDX" or "human" or "mouse"  
+* keep_coverage: whether to keep per-base coverage information. Default is 0. Set to 1 to keep coverage information.
 
 ### Example:
 ```
-perl ~/somatic/somatic.pl ~/seq/1799-01N.R1.fastq.gz ~/seq/1799-01N.R2.fastq.gz ~/seq/1799-01T.R1.fastq.gz ~/seq/1799-01T.R2.fastq.gz 32 hg38 ~/ref/hg38/hs38d1.fa /cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java ~/somatic_result/1799-01/ human
+perl ~/somatic/somatic.pl ~/seq/1799-01N.R1.fastq.gz ~/seq/1799-01N.R2.fastq.gz ~/seq/1799-01T.R1.fastq.gz ~/seq/1799-01T.R2.fastq.gz 32 hg38 ~/ref/hg38/hs38d1.fa /cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java ~/somatic_result/1799-01/ human 1
 ```
 ### Note:
 Input seuqencing files:  
