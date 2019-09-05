@@ -2,12 +2,11 @@
 #
 # The instructions must be followed exactly!!! 
 # Need at least 32GB of memory for DNA jobs and 128GB for RNA jobs
-# The fastq files cannot be coordinated sorted!!!
 # Commonly appearing SNVs in the population are filtered out from the somatic output
 # structural variation calling only works for paired-end DNA-seq data with matched normal
 #
 # prerequisite in path: 
-# Rscript, bwa (>=0.7.15), STAR (if using RNA-Seq data), sambamba, speedseq, varscan, samtools (>=1.6), shimmer
+# Rscript, bwa (>=0.7.15), STAR (>=2.6.1), sambamba, speedseq, varscan, samtools (>=1.6), shimmer
 # annovar (refGene,ljb26_all,cosmic70,esp6500siv2_all,exac03,1000g2015aug downloaded in humandb and refGene downloaded in mousedb)
 # python (2), strelka (>=2.8.3, note: strelka is tuned to run exome-seq or RNA-seq), manta(>=1.4.0), java (1.8)
 # perl (need Parallel::ForkManager), lofreq_star (>=2.1.3), bowtie2 (>=2.3.4.3, for PDX mode)
@@ -30,6 +29,7 @@
 # java17: path (including the executable file name) to java 1.7 (needed only for mutect)
 # output: the output folder, it will be deleted (if pre-existing) and re-created during analysis
 # pdx: "PDX" or "human" or "mouse" 
+# keep_coverage: whether to keep per-base coverage information. Default is 0. Set to 1 to enable
 #
 #!/usr/bin/perl
 use strict;
@@ -38,17 +38,13 @@ use Cwd 'abs_path';
 use File::Copy;
 use Parallel::ForkManager;
 
-my $debug=0; # 0 is default, 1 will invoke some non-standard and advanced usages of the pipeline
-
-my ($fastq1_normal,$fastq2_normal,$fastq1_tumor,$fastq2_tumor,$thread,$build,$index,$java17,$output,$pdx)=@ARGV;
+my ($fastq1_normal,$fastq2_normal,$fastq1_tumor,$fastq2_tumor,$thread,$build,$index,$java17,$output,$pdx,$keep_coverage)=@ARGV;
 my ($line0,$line1,$line2,$read_name,$valid,$path,$picard,$mutect,$gatk,$resource,$dict,$locatit,$annovar_path,$rna,$star_index);
 my ($resource_1000g,$resource_mills,$resource_dbsnp,$resource_cosmic,$normal_bam,$tumor_bam,$type,$mouse_ref);
 my ($known,$strelka_exome,$zcat,$bam2fastq,$pm,$ppm,$pid,$command,$annovar_db,$annovar_protocol);
 my ($normal_output,$tumor_output,$mutect_tmp,$speed_tmp);
 
-my $read_ct_max=100000000; # put a cap on how many reads to use, for sake of memory
-my $read_ct=0;
-
+my $read_ct_max=75000000; # put a cap on how many reads to use, for sake of memory
 my $manta="";
 my @command_array=("fun_mutect();","fun_speed_var_shimmer();","fun_strelka_lofreq();");
 my %vcfs=("passed.somatic.indels.vcf"=>"strelka","passed.somatic.snvs.vcf"=>"strelka","mutect.vcf"=>"mutect",
@@ -132,18 +128,20 @@ if (${$fastq{"normal"}}[0] ne "NA")
   $ppm->wait_all_children;
 }else #tumor only calling
 {
-  #system_call("lofreq call -s --sig 1 --bonf 1 -C 5 -f ".$index." --call-indels ".
-  #  " --verbose --use-orphan -o ".$output."/lofreq.vcf ".$tumor_bam);
-  system_call("configureStrelkaGermlineWorkflow.py --bam ".$tumor_bam." --referenceFasta ".$index.
-  " --runDir ".$output."/strelka/ ".$strelka_exome);
-  
-  system_call($output."/strelka/runWorkflow.py -m local -j ".$thread);
-  system_call("cp ".$output."/strelka/results/variants/variants.vcf.gz ".$output);
-  system_call("cp ".$output."/strelka/results/variants/variants.vcf.gz ".$output."/intermediate");
-  system_call("gzip -d ".$output."/variants.vcf.gz");
-  system_call("rm -f -r ".$output."/strelka");
-
-  system_call("lumpyexpress -B ".$tumor_bam." -R ".$index." -o ".$output."/lumpy_sv.vcf.txt -T ".$output."/tumor/lumpy_temp");
+  if (1==0) # two options
+  {
+    system_call("lofreq call -s --sig 1 --bonf 1 -C 5 -f ".$index." --call-indels ".
+      " --verbose --use-orphan -o ".$output."/lofreq.vcf ".$tumor_bam);
+  }else
+  {
+    system_call("configureStrelkaGermlineWorkflow.py --bam ".$tumor_bam." --referenceFasta ".$index.
+      " --runDir ".$output."/strelka/ ".$strelka_exome); 
+    system_call($output."/strelka/runWorkflow.py -m local -j ".$thread);
+    system_call("cp ".$output."/strelka/results/variants/variants.vcf.gz ".$output);
+    system_call("cp ".$output."/strelka/results/variants/variants.vcf.gz ".$output."/intermediate");
+    system_call("gzip -d ".$output."/variants.vcf.gz");
+    system_call("rm -f -r ".$output."/strelka");
+  }
 }
 
 ###############################  integrate vcf files  #############################
@@ -200,11 +198,11 @@ foreach $type (("germline","somatic"))
 
 # sv
 system("rm -f ".$output."/*vcf");
-if (-e $output."/lumpy_sv.vcf.txt")
-{
-  system_call("grep -v IMPRECISE ".$output."/lumpy_sv.vcf.txt > ".$output."/lumpy_sv_".$build.".vcf");
-  system_call("rm -f ".$output."/lumpy_sv.vcf.txt");
-}
+#if (-e $output."/lumpy_sv.vcf.txt")
+#{
+#  system_call("grep -v IMPRECISE ".$output."/lumpy_sv.vcf.txt > ".$output."/lumpy_sv_".$build.".vcf");
+#  system_call("rm -f ".$output."/lumpy_sv.vcf.txt");
+#}
 
 # clean up
 system("date");
@@ -218,7 +216,7 @@ system("rm -f ".$output."/het_counts*");
 system("rm -f ".$output."/somatic_diffs*");
 system("rm -f ".$output."/somatic_indels.vs");
 system("rm -f ".$output."/passed.somatic.*");
-if ($debug==1)
+if ($keep_coverage==1)
 {
   system_call("cat ".$tumor_output."/tumor.mpileup | cut -f 1-4 > ".$output."/coverage.txt");
 }
@@ -238,6 +236,7 @@ sub alignment{
     my $type = $_[0];
     if (${$fastq{$type}}[0] eq "NA") {return(0);} # tumor-only calling
     my $type_output = $output.'/'.$type;
+    my $n_line;
 
     # check whether tumor sample is RNA-Seq
     $rna=0; # exome-seq
@@ -256,6 +255,12 @@ sub alignment{
           $type_output."/R2.fastq.gz");
         ${$fastq{$type}}[1]=$type_output."/R2.fastq.gz";
       }
+
+      # number of lines in a file
+      open(NL,"zcat ".${$fastq{$type}}[0]." | wc -l |");
+      $n_line=<NL>;
+      $n_line=~s/\s.*//;
+      close(NL);
 
       # other filtering
       open(FQ_IN1,"zcat ".${$fastq{$type}}[0]." |");
@@ -276,12 +281,13 @@ sub alignment{
         $line1.=<FQ_IN1>;
 
         $line2=<FQ_IN2>;
+        unless (defined $line2) {print "Error: fq2 shorter than fq1!\n";last;}
         $line2=$read_name; # force read name to match between R1 and R2
         $line0=<FQ_IN2>;if (length($line0)<=5) {$valid=0;};$line2.=$line0;
         $line0=<FQ_IN2>;$line2.="+\n";
         $line2.=<FQ_IN2>;
 
-        if ($read_ct++>$read_ct_max) {last;}
+        if (rand($n_line/4/$read_ct_max)>1) {$valid=0;}
 
         if ($valid==1)
         {
@@ -326,19 +332,25 @@ sub alignment{
         system_call("mkdir ".$type_output."/tmp");
         system_call("mkdir ".$type_output."/tmp/pass2");
         system_call("STAR --genomeDir ".$star_index." --readFilesIn ".${$fastq{$type}}[0]." ".${$fastq{$type}}[1]." --runThreadN ".$thread.
-          " ".$zcat." --outFileNamePrefix ".$type_output."/tmp/pass1");
+          " ".$zcat." --outFileNamePrefix ".$type_output."/tmp/pass1 --outFilterMatchNminOverLread 0.4 --outFilterScoreMinOverLread 0.4");
         system_call("cd ".$type_output.";STAR --runMode genomeGenerate --genomeDir ".$type_output."/tmp/pass2 --genomeFastaFiles ".$index." --sjdbFileChrStartEnd ".
           $type_output."/tmp/pass1SJ.out.tab --sjdbOverhang 100 --runThreadN ".$thread);
         system_call("STAR --genomeDir ".$type_output."/tmp/pass2 --readFilesIn ".${$fastq{$type}}[0]." ".${$fastq{$type}}[1]." --runThreadN ".$thread.
-          " ".$zcat." --outFileNamePrefix ".$type_output."/");
+          " ".$zcat." --outFileNamePrefix ".$type_output."/ --outFilterMatchNminOverLread 0.4 --outFilterScoreMinOverLread 0.4");
         system_call("mv ".$type_output."/Aligned.out.sam ".$type_output."/alignment.sam");
         unlink_file($type_output."/SJ.out.tab");
+    }
+
+    if ($rna!=2)
+    {
+      unlink_file(${$fastq{$type}}[0]);
+      unlink_file(${$fastq{$type}}[1]);
     }
 
     #add read group
     system_call("java -Djava.io.tmpdir=".$type_output."/tmp -jar ".$picard." AddOrReplaceReadGroups INPUT=".$type_output."/alignment.sam OUTPUT=".
         $type_output."/rgAdded.bam SORT_ORDER=coordinate RGID=".$type." RGLB=".$type." RGPL=illumina RGPU=".$type." RGSM=".$type.
-        " CREATE_INDEX=true VALIDATION_STRINGENCY=LENIENT COMPRESSION_LEVEL=0");
+        " CREATE_INDEX=true VALIDATION_STRINGENCY=LENIENT");
     unlink_file($type_output."/alignment.sam");
 
     # mark duplicates
@@ -379,9 +391,9 @@ sub alignment{
     # indel realignment
     if ($pdx=~/mouse/) {$known=" -known ".$resource_dbsnp." ";} else {$known=" -known ".$resource_mills." -known ".$resource_1000g." ";}
     system_call("java -Djava.io.tmpdir=".$type_output."/tmp -jar ".$gatk." -T RealignerTargetCreator -R ".$index." --num_threads ".$thread.
-      $known." --bam_compression 0 -o ".$type_output."/".$type."_intervals.list -I ".$type_output."/dupmark.bam > ".$type_output."/index.out");
+      $known." -o ".$type_output."/".$type."_intervals.list -I ".$type_output."/dupmark.bam > ".$type_output."/index.out");
 
-    system_call("java -Djava.io.tmpdir=".$type_output."/tmp -jar ".$gatk." -T IndelRealigner --bam_compression 0 ".
+    system_call("java -Djava.io.tmpdir=".$type_output."/tmp -jar ".$gatk." -T IndelRealigner ".
       " --filter_bases_not_stored --disable_auto_index_creation_and_locking_when_reading_rods -R ".$index.$known.
       " -targetIntervals ".$type_output."/".$type."_intervals.list -I ".
       $type_output."/dupmark.bam -o ".$type_output."/realigned.bam >".$type_output."/".$type."_realign.out");
@@ -391,10 +403,10 @@ sub alignment{
 
     # base recalibration
     if ($pdx=~/mouse/) {$known=" ";} else {$known=" -knownSites ".$resource_mills." ";}
-    system_call("java -Djava.io.tmpdir=".$type_output."/tmp -jar ".$gatk." -T BaseRecalibrator -R ".$index." --bam_compression 0 ".
+    system_call("java -Djava.io.tmpdir=".$type_output."/tmp -jar ".$gatk." -T BaseRecalibrator -R ".$index." ".
         " -knownSites ".$resource_dbsnp.$known." -I ".$type_output."/realigned.bam -o ".$type_output."/".
         $type."_bqsr > ".$type_output."/table.out");
-    system_call("java -Djava.io.tmpdir=".$type_output."/tmp -jar ".$gatk." -T PrintReads -rf NotPrimaryAlignment --bam_compression 0 -R ".
+    system_call("java -Djava.io.tmpdir=".$type_output."/tmp -jar ".$gatk." -T PrintReads -rf NotPrimaryAlignment -R ".
         $index." -I ".$type_output."/realigned.bam -BQSR ".$type_output."/".$type."_bqsr -o ".
         $type_output."/".$type.".bam > ".$type_output."/".$type."_recal.out");
 
@@ -436,7 +448,7 @@ sub fun_speed_var_shimmer{
     "/somatic_diffs.readct.vcf");
  
   # lumpy
-  system_call("lumpyexpress -B ".$normal_bam.",".$tumor_bam." -R ".$index." -o ".$output."/lumpy_sv.vcf.txt -T ".$output."/normal/lumpy_temp");
+  #system_call("lumpyexpress -B ".$normal_bam.",".$tumor_bam." -R ".$index." -o ".$output."/lumpy_sv.vcf.txt -T ".$output."/normal/lumpy_temp");
 }
 
 sub fun_strelka_lofreq{
@@ -491,7 +503,7 @@ sub system_call
 #/archive/BICF/shared/Kidney/exome/RAW/SAM19944142_1_2.gne.fastq.gz \
 #32 hg38 /home2/twang6/data/genomes/hg38/hs38d1.fa \
 #/cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java \
-#/project/bioinformatics/Xiao_lab/shared/neoantigen/data/tmp/ human
+#/project/bioinformatics/Xiao_lab/shared/neoantigen/data/tmp/ human 0
 #
 #perl /home2/twang6/software/cancer/somatic/somatic.pl \
 #/archive/BICF/shared/Kidney/exome/RAW/LIB27355_SAM19944430_36695_R1.fastq.gz \
@@ -500,4 +512,4 @@ sub system_call
 #/archive/BICF/shared/Kidney/exome/RAW/LIB27324_SAM19944399_36728_R2.fastq.gz \
 #32 mm10 /home2/twang6/data/genomes/mm10/mm10.fasta \
 #/cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java \
-#/project/bioinformatics/Xiao_lab/shared/neoantigen/data/tmp mouse
+#/project/bioinformatics/Xiao_lab/shared/neoantigen/data/tmp mouse 0
