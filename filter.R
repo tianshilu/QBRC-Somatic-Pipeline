@@ -116,6 +116,7 @@ for (i in 1:dim(design)[1])
   file=paste(design$folder[i],"/somatic_mutations_",refBuild,".txt",sep="")
   tmp=read.table(file,stringsAsFactors = F,sep="\t",header = T,
                  colClasses=c("Ref"="character","Alt"="character"))
+  if (dim(tmp)[1]==0) {next}
   tmp$sample_id=design$sample_id[i]
   tmp$patient_id=design$patient_id[i]
   
@@ -186,42 +187,6 @@ cosmic_role=cosmic_genes$Role.in.Cancer[match(tolower(rownames(sum_mut)),tolower
 write.csv(cbind(cosmic_role,sum_mut),file=paste(path,"/summary_mutations_details.csv",sep=""))
 write.csv(cbind(cosmic_role,1*(sum_mut!="")),file=paste(path,"/summary_mutations.csv",sep=""))
 
-# plot heatmap
-tryCatch({
-  tmp <-sum_mut
-  tmp=tmp[apply(tmp!="",1,sum)/dim(tmp)[2]>0.05,]
-  tmp=tmp[tolower(rownames(tmp)) %in% tolower(rownames(cosmic_genes)),]
-  tmp=tmp[order(-apply(tmp!="",1,sum)),]
-  percentages=paste(" (",round(apply(tmp!="",1,sum)/dim(tmp)[2]*100,d=1),"%)",sep="")
-  rownames(tmp)=paste(rownames(tmp),percentages)
-  
-  pdf(file=paste(path,"/mutations_heatmap_cosmic.pdf",sep=""),
-      width=max(dim(tmp)[2]/6+4,8),height=max(dim(tmp)[1]/10+5,8))
-  pat_id=design$patient_id[match(colnames(sum_mut),design$sample_id)]
-  
-  tmp[tmp==""]<-0
-  tmp[tmp=="exonic nonsynonymous SNV"]<-1
-  tmp[tmp=="exonic frameshift substitution"]<-2
-  tmp[tmp=="exonic stopgain"]<-3
-  tmp[tmp=="exonic nonframeshift substitution"]<-4
-  tmp[tmp=="splicing ."]<-5
-  tmp[tmp=="exonic unknown"]<-6
-  tmp[tmp=="exonic stoploss"]<-7
-  tmp[!(tmp <= 8 )]<-8  #please change
-  tmp=as.data.frame(tmp,stringsAsFactors=F)
-  for (i in 1:dim(tmp)[2]) {tmp[,i]=as.numeric(tmp[,i])}
-  tmp=as.matrix(tmp)
-  
-  breaks = c(-0.5,0.5,1.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5)
-  col= c("gray", "red", "blue", "green", "cyan", "gold", "orchid", "plum","black")
-  heatmap.2(tmp,breaks=breaks,col=col,lmat=rbind( c(4,5,2), c(6,1,3) ), key=F, extrafun=myplot, 
-            Rowv=F,Colv=F,dendrogram="none",trace="none",srtCol=45,density.info="none",  
-            colsep=which(pat_id[-1]!=pat_id[-length(pat_id)]),sepwidth=c(0.03,0.3),
-            sepcolor="white", lhei=c(1,dim(tmp)[1]/10), lwid=c(1,6,1), keysize=1, 
-            key.par = list(cex=0.5), cexRow= 0.8,cexCol = 0.8)
-  dev.off()
-},error=function(e) {print("Not plotting heatmap!")})
-
 ##########  plotting  ###################
 
 # phylo tree
@@ -287,9 +252,31 @@ for (sample in unique(mutations$sample_id))
 dev.off()
 
 # oncoplot
-pdf(file=paste(path,"/oncoplot.pdf",sep=""),width=10,height=10)
-oncoplot(maf = laml, top = 50, removeNonMutated = TRUE)
+annotation_oncoplot=design
+annotation_oncoplot=cbind(Tumor_Sample_Barcodes=design$sample_id,annotation_oncoplot)
+annotation_oncoplot=annotation_oncoplot[annotation_oncoplot$sample_id %in% mutations$sample_id,]
+
+pdf(file=paste(path,"/oncoplot_all.pdf",sep=""),width=10,height=10)
+oncoplot(maf = laml, top = 50, showTumorSampleBarcodes=T,removeNonMutated=F)
 dev.off()
+pdf(file=paste(path,"/oncoplot_all_orderbypatient.pdf",sep=""),width=10,height=10)
+oncoplot(maf = laml, top = 50, showTumorSampleBarcodes=T,removeNonMutated=F,
+  annotation=annotation_oncoplot,sortByAnnotation=T)
+dev.off()
+
+show_genes=table(mutations$Gene.refGene)
+show_genes=names(show_genes[rank(-show_genes)<50])
+show_genes=show_genes[show_genes %in% rownames(cosmic_genes)]
+if (length(show_genes)>2)
+{
+  pdf(file=paste(path,"/oncoplot_cosmic.pdf",sep=""),width=10,height=10)
+  oncoplot(maf = laml, top = 50, showTumorSampleBarcodes=T,removeNonMutated=F,genes=show_genes)
+  dev.off()
+  pdf(file=paste(path,"/oncoplot_cosmic_orderbypatient.pdf",sep=""),width=10,height=10)
+  oncoplot(maf = laml, top = 50, showTumorSampleBarcodes=T,removeNonMutated=F,genes=show_genes,
+    annotation=annotation_oncoplot,sortByAnnotation=T)
+  dev.off()
+}
 
 # lollipop plot
 dir=paste(path,"/lollipop",sep="")
