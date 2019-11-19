@@ -1,6 +1,6 @@
 # you may modify the following codes to suit some special needs
-# need the corrplot, NMF, maftools, gplots, ape, and phangorn R packages
-# best use R>=3.4.0. Can be executed from Rstudio or Rscript, but not in plain R console
+# need the corrplot, NMF, maftools (>2.0), and gplots R packages
+# best use R>=3.6. Can be executed from Rstudio or Rscript, but not in plain R console
 
 # exclude TG/PDX samples from this analysis
 # strongly recommend NOT to add un-matched mutation calling results to this analysis.
@@ -14,16 +14,13 @@
 
 # the third argument is the reference genome build, hg38, hg19, mm10
 
-# the fourth argument is the path to the reference genome file
+# the fourth argument is the minimum VAF of the mutations in the tumor sample (recommended: 0.01-0.05)
 
-# the fifth argument is the minimum VAF of the mutations in the tumor sample (recommended: 0.01-0.05)
-
-# the sixth argument is whether to filter out extremely long genes. TRUE/FALSE. Default is FALSE
+# the fifth argument is whether to filter out extremely long genes. TRUE/FALSE. Default is FALSE
 # see below for list of genes. These genes usually turn out to have somatic mutations in 
 # any cohort of patients
 
-# Rscript filter.R ./example/filter.txt ./example/filter hg38 \
-#   /home2/twang6/data/genomes/hg38/hs38d1.fa 0.01 FALSE
+# Rscript filter.R ./example/filter.txt ./example/filter hg38 0.01 FALSE
 
 ######  setting up  ##########
 
@@ -31,19 +28,26 @@ library(corrplot)
 library(NMF)
 library(maftools)
 library(gplots)
-library(phangorn)
-library(ape) 
+#library(phangorn)
+#library(ape) 
 options(scipen=999)
 
 args = commandArgs(trailingOnly=TRUE)
-if (length(args)!=6) {stop("Error: Not the correct number of arguments!")}
+if (length(args)!=5) {stop("Error: Not the correct number of arguments!")}
 design=args[1]
 path=args[2]
 refBuild=args[3]
-ref_genome=args[4]
-min_tumor_vaf=as.numeric(args[5])
-filter_long=args[6]=="TRUE"
+min_tumor_vaf=as.numeric(args[4])
+filter_long=args[5]=="TRUE"
 
+if (grepl("hg",refBuild))
+{
+  ref_genome=paste("BSgenome.Hsapiens.UCSC.",refBuild,sep="")
+}else
+{
+  ref_genome=paste("BSgenome.Mmusculus.UCSC.",refBuild,sep="")
+}
+    
 if (Sys.getenv("RSTUDIO") == "1")
 {
   library(rstudioapi)
@@ -189,54 +193,13 @@ write.csv(cbind(cosmic_role,1*(sum_mut!="")),file=paste(path,"/summary_mutations
 
 ##########  plotting  ###################
 
-# phylo tree
-# pdf(file=paste(path,"/phylo_tree.pdf",sep=""),width=6,height=6)
-# tmp=table(design$patient_id)
-# phylo_tree_pats=names(tmp[tmp>=3])
-# 
-# for (phylo_tree_pat in phylo_tree_pats)
-# {
-#   # extract mutation data
-#   mutations_pat=mutations[mutations$patient_id==phylo_tree_pat,]
-#   mutations_pat$vaf=mutations_pat$Tumor_alt/(mutations_pat$Tumor_alt+mutations_pat$Tumor_ref)
-#   mutations_pat$vaf=mutations_pat$vaf/quantile(mutations_pat$vaf,0.8)
-#   mutations_pat$vaf[mutations_pat$vaf>1]=1
-#   mutations_mat=matrix(0,ncol=length(unique(mutations_pat$mutation)),
-#                        nrow=length(unique(mutations_pat$sample_id)))
-#   colnames(mutations_mat)=unique(mutations_pat$mutation)
-#   rownames(mutations_mat)=unique(mutations_pat$sample_id)
-#   for (i in 1:dim(mutations_pat)[1])
-#     {mutations_mat[mutations_pat$sample_id[i],mutations_pat$mutation[i]]=mutations_pat$vaf[i]}
-# 
-#   # transform
-#   mutations_mat=rbind(mutations_mat[1,],mutations_mat)
-#   rownames(mutations_mat)[1]="Normal"
-#   mutations_mat[1,]=0
-#   mutations_mat=t(mutations_mat)
-# 
-#   # plot
-#   vaf=mutations_mat
-#   thr = 0.05
-#   vaf_bin <- vaf
-#   vaf_bin[vaf>=thr] <- 1
-#   vaf_bin[vaf<thr] <- 0
-#   vaf_bin <- as.data.frame(vaf_bin)
-#   phydat <- phyDat(vaf_bin,type="USER",levels=c(0,1))
-#   partree <- pratchet(phydat,trace = F)
-#   partree <- acctran(partree,phydat)
-#   tree <- as.phylo(partree)
-#   plot.phylo(tree,main=phylo_tree_pat,
-#              type = "unrooted",direction = "rightwards",edge.width = 3,cex = 1.2)
-# }
-# dev.off()
-
 # get data into maf format
 laml=annovarToMaf(annovar=paste(path,"/all_mutations.txt",sep=""),refBuild)
 write.table(laml,file=paste(path,"/all_mutations.maf",sep=""),quote=F,sep="\t",row.names = F)
 laml = read.maf(maf = paste(path,"/all_mutations.maf",sep=""), useAll = TRUE)
 
 # summary
-pdf(file=paste(path,"/summary.pdf",sep=""),width=8,height=6)
+pdf(file=paste(path,"/summary.pdf",sep=""),width=12,height=8)
 plotmafSummary(maf = laml, rmOutlier = TRUE, addStat = 'median', dashboard = TRUE,top=20)
 dev.off()
 
@@ -253,15 +216,17 @@ dev.off()
 
 # oncoplot
 annotation_oncoplot=design
-annotation_oncoplot=cbind(Tumor_Sample_Barcodes=design$sample_id,annotation_oncoplot)
+annotation_oncoplot=cbind(Tumor_Sample_Barcode=design$sample_id,annotation_oncoplot)
 annotation_oncoplot=annotation_oncoplot[annotation_oncoplot$sample_id %in% mutations$sample_id,]
 
 pdf(file=paste(path,"/oncoplot_all.pdf",sep=""),width=10,height=10)
-oncoplot(maf = laml, top = 50, showTumorSampleBarcodes=T,removeNonMutated=F)
+oncoplot(maf = laml, top = 50, showTumorSampleBarcodes=T,removeNonMutated=F,
+  fontSize=0.6,SampleNamefontSize=0.6,titleFontSize=1,legendFontSize=0.8,annotationFontSize=0.8)
 dev.off()
 pdf(file=paste(path,"/oncoplot_all_orderbypatient.pdf",sep=""),width=10,height=10)
 oncoplot(maf = laml, top = 50, showTumorSampleBarcodes=T,removeNonMutated=F,
-  annotation=annotation_oncoplot,sortByAnnotation=T)
+  annotationDat=annotation_oncoplot,sortByAnnotation=T,clinicalFeatures="patient_id",
+  fontSize=0.6,SampleNamefontSize=0.6,titleFontSize=1,legendFontSize=0.8,annotationFontSize=0.8)
 dev.off()
 
 show_genes=table(mutations$Gene.refGene)
@@ -270,33 +235,44 @@ show_genes=show_genes[show_genes %in% rownames(cosmic_genes)]
 if (length(show_genes)>2)
 {
   pdf(file=paste(path,"/oncoplot_cosmic.pdf",sep=""),width=10,height=10)
-  oncoplot(maf = laml, top = 50, showTumorSampleBarcodes=T,removeNonMutated=F,genes=show_genes)
+  oncoplot(maf = laml, top = 50, showTumorSampleBarcodes=T,removeNonMutated=F,genes=show_genes,
+  fontSize=0.6,SampleNamefontSize=0.6,titleFontSize=1,legendFontSize=0.8,annotationFontSize=0.8)
   dev.off()
   pdf(file=paste(path,"/oncoplot_cosmic_orderbypatient.pdf",sep=""),width=10,height=10)
   oncoplot(maf = laml, top = 50, showTumorSampleBarcodes=T,removeNonMutated=F,genes=show_genes,
-    annotation=annotation_oncoplot,sortByAnnotation=T)
+    annotationDat=annotation_oncoplot,sortByAnnotation=T,clinicalFeatures="patient_id",
+    fontSize=0.6,SampleNamefontSize=0.6,titleFontSize=1,legendFontSize=0.8,annotationFontSize=0.8)
   dev.off()
 }
 
 # lollipop plot
-dir=paste(path,"/lollipop",sep="")
-if (!file.exists(dir)) {dir.create(file.path(dir))}
-for (gene in getGeneSummary(laml)$Hugo_Symbol[1:30])
-{
- pdf(file=paste(path,"/lollipop/",gene,".pdf",sep=""), width=10, height=3)
- tryCatch({lollipopPlot(maf = laml, gene = gene, AACol = 'AAChange',labelPos="all",repel=T,
-  labPosAngle=45,domainLabelSize=1.5,printCount=T)},
-   error=function(e) 1)
- dev.off()
-}
-
-#somatic signature analysis
-laml.tnm = trinucleotideMatrix(maf = laml, ref_genome,  ignoreChr=NULL, useSyn = TRUE)
-
-laml.sign = extractSignatures(mat = laml.tnm, n=4,nTry = 10, plotBestFitRes = FALSE)
-write.csv(laml.sign$contributions,paste(path,"/mut_sig.csv",sep=""),row.names=TRUE)
-
-pdf(file=paste(path,"/mut_sig.pdf",sep=""), width=5, height=5)
-plotSignatures(laml.sign)
-corrplot::corrplot(corr = laml.sign$coSineSimMat, col = RColorBrewer::brewer.pal(n = 9, name = 'Oranges'), is.corr = FALSE, tl.cex = 0.6, tl.col = 'black', cl.cex = 0.6)
-dev.off()
+# dir=paste(path,"/lollipop",sep="")
+# if (!file.exists(dir)) {dir.create(file.path(dir))}
+# for (gene in getGeneSummary(laml)$Hugo_Symbol[1:20])
+# {
+#  pdf(file=paste(path,"/lollipop/",gene,".pdf",sep=""), width=10, height=3)
+#  tryCatch({lollipopPlot(maf = laml, gene = gene,AACol='AAChange.refGene',labelPos="all",repel=T,
+#   labPosAngle=45,domainLabelSize=1.5,printCount=T)},
+#    error=function(e) print(e))
+#  dev.off()
+# }
+# 
+# #somatic signature analysis
+# tryCatch({eval(parse(text=paste("require(",ref_genome,")",sep="")))},
+#   error=function(e) {
+#     cat(paste("installing ",ref_genome,", will take some time\n",sep=""))
+#     if (!requireNamespace("BiocManager", quietly = TRUE)) {install.packages("BiocManager")}
+#     BiocManager::install(ref_genome)
+#     eval(parse(text=paste("require(",ref_genome,")",sep="")))  
+# })
+# 
+# laml.tnm = trinucleotideMatrix(maf = laml, ref_genome,  ignoreChr=NULL, useSyn = TRUE)
+# laml.sign = extractSignatures(mat = laml.tnm, nTry = 10, plotBestFitRes = FALSE)
+# write.csv(laml.sign$contributions,paste(path,"/mut_sig.csv",sep=""),row.names=TRUE)
+# 
+# pdf(file=paste(path,"/mut_sig.pdf",sep=""), width=5, height=5)
+# plotSignatures(laml.sign)
+# corrplot::corrplot(corr = laml.sign$coSineSimMat,
+#   col = RColorBrewer::brewer.pal(n = 9, name = 'Oranges'), 
+#   is.corr = FALSE, tl.cex = 0.6, tl.col = 'black', cl.cex = 0.6)
+# dev.off()
