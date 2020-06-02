@@ -21,8 +21,11 @@ use Cwd 'abs_path';
 use File::Copy;
 use Parallel::ForkManager;
 
+# hidden paramters
+my $read_ct_max=50000000; 
+
 my ($fastq1_normal,$fastq2_normal,$fastq1_tumor,$fastq2_tumor,$thread,$index,$somatic,$output)=@ARGV;
-my ($picard,%fastq,$path,$normal_bam,$tumor_bam,$type);
+my ($line0,$read_name,$valid,$line1,$line2,$n_line,$picard,%fastq,$path,$normal_bam,$tumor_bam,$type);
 my ($zcat,$bam2fastq,$pm,$ppm,$pid,$command,$normal_output,$tumor_output);
 
 ########################  prepare  ##########################
@@ -113,10 +116,60 @@ sub alignment{
     system_call("fastqc -o ".$type_output."/fastqc --extract -t ".$thread." -q -d ".$type_output."/fastqc ".
       ${$fastq{$type}}[0]." ".${$fastq{$type}}[1]);
 
+    # number of lines in a file
+    open(NL,"< ".${$fastq{$type}}[0]);
+    $n_line=0;
+    $n_line++ while <NL>;
+    close(NL);
+
+    # other filtering 
+    open(FQ_IN1,${$fastq{$type}}[0]);
+    open(FQ_OUT1,">".$type_output."/fastq1.fastq.tmp");
+    open(FQ_IN2,${$fastq{$type}}[1]);
+    open(FQ_OUT2,">".$type_output."/fastq2.fastq.tmp");
+
+    $line1=$line2="";
+    $valid=1;
+      
+    while ($line1=<FQ_IN1>)
+    {
+      $line1=~s/\s.*//; # keep only read name
+      $line1=~s/\n//;
+      $line1.="\n";
+      $read_name=$line1;
+      $line0=<FQ_IN1>;if (length($line0)<=5) {$valid=0;};$line1.=$line0;
+      $line0=<FQ_IN1>;$line1.="+\n";
+      $line1.=<FQ_IN1>;
+
+      $line2=<FQ_IN2>;
+      unless (defined $line2) {print "Error: fq2 shorter than fq1!\n";last;}
+      $line2=$read_name; # force read name to match between R1 and R2
+      $line0=<FQ_IN2>;if (length($line0)<=5) {$valid=0;};$line2.=$line0;
+      $line0=<FQ_IN2>;$line2.="+\n";
+      $line2.=<FQ_IN2>;
+
+      if (rand($n_line/4/$read_ct_max)>1) {$valid=0;}
+
+      if ($valid==1)
+      {
+        print FQ_OUT1 $line1;
+        print FQ_OUT2 $line2;
+      }
+      $valid=1;
+    }
+
+    close(FQ_IN1);
+    close(FQ_OUT1);
+    close(FQ_IN2);
+    close(FQ_OUT2);
+
+    system_call("mv ".$type_output."/fastq1.fastq.tmp ".$type_output."/fastq1.fastq");
+    system_call("mv ".$type_output."/fastq2.fastq.tmp ".$type_output."/fastq2.fastq");
+
     # align
     system_call("bwa mem -v 1 -t ".$thread." -a -M ".$index." ".${$fastq{$type}}[0]." ".${$fastq{$type}}[1]." > ".$type_output."/alignment.sam");
-    system("rm -f ".$type_output."/fastq1.fastq*");
-    system("rm -f ".$type_output."/fastq2.fastq*");
+    system_call("rm -f ".$type_output."/fastq1.fastq*");
+    system_call("rm -f ".$type_output."/fastq2.fastq*");
 
     # remove decoy
     open(FILE_SAM,$type_output."/alignment.sam");
@@ -169,11 +222,10 @@ sub system_call
 }
 
 #perl /home2/twang6/software/cancer/somatic/cnv.pl \
-#/project/bioinformatics/Xiao_lab/shared/genomics/IL2/exome_seq/25838_N_S546_L007_R1_001_val_1.fq.gz \
-#/project/bioinformatics/Xiao_lab/shared/genomics/IL2/exome_seq/25838_N_S546_L007_R2_001_val_2.fq.gz \
-#/project/bioinformatics/Xiao_lab/shared/genomics/IL2/exome_seq/27522_N_S564_L008_R1_001_val_1.fq.gz \
-#/project/bioinformatics/Xiao_lab/shared/genomics/IL2/exome_seq/27522_N_S564_L008_R2_001_val_2.fq.gz \
-#32 /home2/twang6/data/genomes/hg38/hs38d1.fa \
+#/project/BICF/shared/Kidney/Projects/ActiveSurveillance/Exome/RAW/9A_GATGAATC_ACBLLMANXX_L008_001.R1.fastq.gz \
+#/project/BICF/shared/Kidney/Projects/ActiveSurveillance/Exome/RAW/9A_GATGAATC_ACBLLMANXX_L008_001.R2.fastq.gz \
+#/project/BICF/shared/Kidney/Projects/ActiveSurveillance/Exome/RAW/9B_CTAAGGTC_ACBLLMANXX_L005_001.R1.fastq.gz \
+#/project/BICF/shared/Kidney/Projects/ActiveSurveillance/Exome/RAW/9B_CTAAGGTC_ACBLLMANXX_L005_001.R2.fastq.gz \
+#32 /project/shared/xiao_wang/data/hg38/hs38d1.fa \
 #/project/bioinformatics/Xiao_lab/shared/neoantigen/data/somatic/exome_seq/005T/somatic_mutations_hg38.txt \
-#~/iproject/cnv
-
+#/project/bioinformatics/Xiao_lab/shared/neoantigen/data/tmp2

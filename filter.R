@@ -1,5 +1,6 @@
 # you may modify the following codes to suit some special needs
-# need the corrplot, NMF, maftools (>2.0), and gplots R packages
+# need the corrplot, NMF, maftools (>2.0), and BSgenome, MutationalPatterns,
+# gridExtra, and gplots R packages
 # best use R>=3.6. Can be executed from Rstudio or Rscript, but not in plain R console
 
 # exclude TG/PDX samples from this analysis
@@ -57,7 +58,6 @@ if (Sys.getenv("RSTUDIO") == "1")
   args=commandArgs(trailingOnly = F)
   scriptPath=normalizePath(dirname(sub("^--file=", "", args[grep("^--file=", args)])))
 }
-source(paste(scriptPath,"/somatic_script/filter_functions.R",sep=""))
 
 cosmic_genes=read.csv(paste(scriptPath,"/somatic_script/cancer_gene_census.csv",sep=""),row.names=1,
                       stringsAsFactors = F)
@@ -153,6 +153,27 @@ mutations=mutations[!mutations$mutation %in% names(artefact),]
 cosmic_role=cosmic_genes$Role.in.Cancer[match(tolower(mutations$Gene.refGene),tolower(rownames(cosmic_genes)))]
 write.csv(cbind(mutations,cosmic_role),file=paste(path,"/all_mutations.csv",sep=""),row.names = F)
 
+# vcf file
+system(paste("rm -f -r ",path,"/each",sep=""))
+system(paste("mkdir ",path,"/each",sep=""))
+
+for (sample_id in unique(mutations$sample_id))
+{
+  vcf=mutations[mutations$sample_id==sample_id,]
+  vcf=vcf[,c("Chr","Start","Ref","Alt")]
+  vcf$ID=vcf$QUAL=vcf$INFO="."
+  vcf$FILTER="PASS"
+  vcf=vcf[,c("Chr","Start","ID","Ref","Alt","QUAL","FILTER","INFO")]
+  colnames(vcf)=c("#CHROM","POS","ID","REF","ALT","QUAL","FILTER","INFO")
+  write.table("##fileformat=VCFv4.2",
+    file=paste(path,"/each/",sample_id,".vcf",sep=""),
+    row.names=F,col.names=F,quote=F)
+  suppressWarnings({write.table(vcf,
+    file=paste(path,"/each/",sample_id,".vcf",sep=""),
+    row.names=F,col.names=T,quote=F,sep="\t",append=T)})
+}
+
+# for maf file
 tmp=mutations[,c("Chr","Start","End","Ref","Alt","Gene.refGene","ExonicFunc.refGene",
                  "AAChange.refGene","sample_id","Func.refGene")]
 colnames(tmp)[9]="Tumor_Sample_Barcode"
@@ -169,6 +190,7 @@ for (i in 1:dim(tmp)[1]) # newer versions of annovar do not label fs mutations p
     tmp$ExonicFunc.refGene[i]=gsub("frameshift substitution","frameshift insertion",tmp$ExonicFunc.refGene[i])
   }
 }
+
 write.table(tmp[,c("Chr","Start","End","Ref","Alt","Gene.refGene","GeneDetail.refGene","ExonicFunc.refGene",
   "AAChange.refGene","Tumor_Sample_Barcode","Func.refGene")],file=paste(path,"/all_mutations.txt",sep=""),row.names = F,sep="\t",quote=F)
 
@@ -221,12 +243,13 @@ annotation_oncoplot=annotation_oncoplot[annotation_oncoplot$sample_id %in% mutat
 
 pdf(file=paste(path,"/oncoplot_all.pdf",sep=""),width=10,height=10)
 oncoplot(maf = laml, top = 50, showTumorSampleBarcodes=T,removeNonMutated=F,
-  fontSize=0.6,SampleNamefontSize=0.6,titleFontSize=1,legendFontSize=0.8,annotationFontSize=0.8)
+  fontSize=0.6,SampleNamefontSize=1,titleFontSize=1,legendFontSize=0.8,annotationFontSize=0.8)
 dev.off()
 pdf(file=paste(path,"/oncoplot_all_orderbypatient.pdf",sep=""),width=10,height=10)
 oncoplot(maf = laml, top = 50, showTumorSampleBarcodes=T,removeNonMutated=F,
-  annotationDat=annotation_oncoplot,sortByAnnotation=T,clinicalFeatures="patient_id",
-  fontSize=0.6,SampleNamefontSize=0.6,titleFontSize=1,legendFontSize=0.8,annotationFontSize=0.8)
+  annotationDat=annotation_oncoplot[,c("Tumor_Sample_Barcode","patient_id")],
+  sortByAnnotation=T,clinicalFeatures="patient_id",
+  fontSize=0.6,SampleNamefontSize=1,titleFontSize=1,legendFontSize=0.8,annotationFontSize=0.8)
 dev.off()
 
 show_genes=table(mutations$Gene.refGene)
@@ -236,12 +259,13 @@ if (length(show_genes)>2)
 {
   pdf(file=paste(path,"/oncoplot_cosmic.pdf",sep=""),width=10,height=10)
   oncoplot(maf = laml, top = 50, showTumorSampleBarcodes=T,removeNonMutated=F,genes=show_genes,
-  fontSize=0.6,SampleNamefontSize=0.6,titleFontSize=1,legendFontSize=0.8,annotationFontSize=0.8)
+  fontSize=0.6,SampleNamefontSize=1,titleFontSize=1,legendFontSize=0.8,annotationFontSize=0.8)
   dev.off()
   pdf(file=paste(path,"/oncoplot_cosmic_orderbypatient.pdf",sep=""),width=10,height=10)
   oncoplot(maf = laml, top = 50, showTumorSampleBarcodes=T,removeNonMutated=F,genes=show_genes,
-    annotationDat=annotation_oncoplot,sortByAnnotation=T,clinicalFeatures="patient_id",
-    fontSize=0.6,SampleNamefontSize=0.6,titleFontSize=1,legendFontSize=0.8,annotationFontSize=0.8)
+    annotationDat=annotation_oncoplot[,c("Tumor_Sample_Barcode","patient_id")],
+    sortByAnnotation=T,clinicalFeatures="patient_id",
+    fontSize=0.6,SampleNamefontSize=1,titleFontSize=1,legendFontSize=0.8,annotationFontSize=0.8)
   dev.off()
 }
 
@@ -256,23 +280,47 @@ if (length(show_genes)>2)
 #    error=function(e) print(e))
 #  dev.off()
 # }
-# 
-# #somatic signature analysis
-# tryCatch({eval(parse(text=paste("require(",ref_genome,")",sep="")))},
-#   error=function(e) {
-#     cat(paste("installing ",ref_genome,", will take some time\n",sep=""))
-#     if (!requireNamespace("BiocManager", quietly = TRUE)) {install.packages("BiocManager")}
-#     BiocManager::install(ref_genome)
-#     eval(parse(text=paste("require(",ref_genome,")",sep="")))  
-# })
-# 
-# laml.tnm = trinucleotideMatrix(maf = laml, ref_genome,  ignoreChr=NULL, useSyn = TRUE)
-# laml.sign = extractSignatures(mat = laml.tnm, nTry = 10, plotBestFitRes = FALSE)
-# write.csv(laml.sign$contributions,paste(path,"/mut_sig.csv",sep=""),row.names=TRUE)
-# 
-# pdf(file=paste(path,"/mut_sig.pdf",sep=""), width=5, height=5)
-# plotSignatures(laml.sign)
-# corrplot::corrplot(corr = laml.sign$coSineSimMat,
-#   col = RColorBrewer::brewer.pal(n = 9, name = 'Oranges'), 
-#   is.corr = FALSE, tl.cex = 0.6, tl.col = 'black', cl.cex = 0.6)
-# dev.off()
+
+## somatic signature analysis
+# install ref genome librarys
+tryCatch({eval(parse(text=paste("require(",ref_genome,")",sep="")))},
+   error=function(e) {
+     cat(paste("installing ",ref_genome,", will take some time\n",sep=""))
+     if (!requireNamespace("BiocManager", quietly = TRUE)) {install.packages("BiocManager")}
+     BiocManager::install(ref_genome)
+     eval(parse(text=paste("require(",ref_genome,")",sep="")))  
+})
+
+# load library
+library(BSgenome)
+library(ref_genome, character.only = TRUE)
+library(MutationalPatterns)
+library(gridExtra)
+
+# read from vcf files
+indiv_vcfs=list.files(paste(path,"/each",sep=""),pattern=".vcf",full.names=T)
+sample_names=sub("\\.vcf$","",sub(".*\\/each\\/","",indiv_vcfs),perl=T)
+suppressWarnings({indiv_vcfs=read_vcfs_as_granges(indiv_vcfs,
+  sample_names, ref_genome)})
+mut_mat = mut_matrix(vcf_list = indiv_vcfs, ref_genome = ref_genome)
+
+# read reference cancer signatures
+sp_url = paste("https://cancer.sanger.ac.uk/cancergenome/assets/",
+               "signatures_probabilities.txt", sep = "")
+cancer_signatures = read.table(sp_url, sep = "\t", header = TRUE,
+                               stringsAsFactors = F)
+new_order = match(row.names(mut_mat), cancer_signatures$Somatic.Mutation.Type)
+cancer_signatures = cancer_signatures[as.vector(new_order),]
+row.names(cancer_signatures) = cancer_signatures$Somatic.Mutation.Type
+cancer_signatures = as.matrix(cancer_signatures[, 4:33])
+
+# actual fitting
+fit_res = fit_to_signatures(mut_mat, cancer_signatures)
+select = which(rowSums(fit_res$contribution) > 10)
+
+pdf(paste(path,"/mut_sig.pdf",sep=""), width = 15, height = 10)
+plot_contribution(fit_res$contribution[select,],
+  cancer_signatures[, select],coord_flip = T,mode = "absolute")
+plot_contribution(fit_res$contribution[select,],
+  cancer_signatures[, select],coord_flip = T,mode = "relative")
+dev.off()

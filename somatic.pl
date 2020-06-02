@@ -6,7 +6,7 @@
 # structural variation calling only works for paired-end DNA-seq data with matched normal
 #
 # prerequisite in path: 
-# Rscript, bwa (>=0.7.15), STAR (>=2.6.1), sambamba, speedseq, varscan, samtools (>=1.6), shimmer
+# Rscript, bwa (>=0.7.15), STAR (>=2.7.2), sambamba, speedseq, varscan, samtools (>=1.6), shimmer
 # annovar (refGene,ljb26_all,cosmic70,esp6500siv2_all,exac03,1000g2015aug downloaded in humandb and refGene downloaded in mousedb)
 # python (2), strelka (>=2.8.3, note: strelka is tuned to run exome-seq or RNA-seq), manta(>=1.4.0), java (1.8)
 # perl (need Parallel::ForkManager), lofreq_star (>=2.1.3), bowtie2 (>=2.3.4.3, for PDX mode)
@@ -38,13 +38,17 @@ use Cwd 'abs_path';
 use File::Copy;
 use Parallel::ForkManager;
 
+# hidden paramters
+my $lofreq=0; # 1 or 0. For tumor-only mode, use lofreq or strelka
+my $skip_recal=1; # 1 or 0. Skip base recalibration or not
+my $read_ct_max=50000000; # put a cap on how many reads to use, for sake of memory
+
 my ($fastq1_normal,$fastq2_normal,$fastq1_tumor,$fastq2_tumor,$thread,$build,$index,$java17,$output,$pdx,$keep_coverage)=@ARGV;
 my ($line0,$line1,$line2,$read_name,$valid,$path,$picard,$mutect,$gatk,$resource,$dict,$locatit,$annovar_path,$rna,$star_index);
 my ($resource_1000g,$resource_mills,$resource_dbsnp,$resource_cosmic,$normal_bam,$tumor_bam,$type,$mouse_ref);
 my ($known,$strelka_exome,$zcat,$bam2fastq,$pm,$ppm,$pid,$command,$annovar_db,$annovar_protocol);
 my ($normal_output,$tumor_output,$mutect_tmp,$speed_tmp);
 
-my $read_ct_max=75000000; # put a cap on how many reads to use, for sake of memory
 my $manta="";
 my @command_array=("fun_mutect();","fun_speed_var_shimmer();","fun_strelka_lofreq();");
 my %vcfs=("passed.somatic.indels.vcf"=>"strelka","passed.somatic.snvs.vcf"=>"strelka","mutect.vcf"=>"mutect",
@@ -128,7 +132,7 @@ if (${$fastq{"normal"}}[0] ne "NA")
   $ppm->wait_all_children;
 }else #tumor only calling
 {
-  if (1==0) # two options
+  if ($lofreq==1) # two options
   {
     system_call("lofreq call -s --sig 1 --bonf 1 -C 5 -f ".$index." --call-indels ".
       " --verbose --use-orphan -o ".$output."/lofreq.vcf ".$tumor_bam);
@@ -402,18 +406,24 @@ sub alignment{
     unlink_file($type_output."/dupmark.bam.bai");
 
     # base recalibration
-    if ($pdx=~/mouse/) {$known=" ";} else {$known=" -knownSites ".$resource_mills." ";}
-    system_call("java -Djava.io.tmpdir=".$type_output."/tmp -jar ".$gatk." -T BaseRecalibrator -R ".$index." ".
+    if ($skip_recal==0)
+    {
+      if ($pdx=~/mouse/) {$known=" ";} else {$known=" -knownSites ".$resource_mills." ";}
+      system_call("java -Djava.io.tmpdir=".$type_output."/tmp -jar ".$gatk." -T BaseRecalibrator -R ".$index." ".
         " -knownSites ".$resource_dbsnp.$known." -I ".$type_output."/realigned.bam -o ".$type_output."/".
         $type."_bqsr > ".$type_output."/table.out");
-    system_call("java -Djava.io.tmpdir=".$type_output."/tmp -jar ".$gatk." -T PrintReads -rf NotPrimaryAlignment -R ".
+      system_call("java -Djava.io.tmpdir=".$type_output."/tmp -jar ".$gatk." -T PrintReads -rf NotPrimaryAlignment -R ".
         $index." -I ".$type_output."/realigned.bam -BQSR ".$type_output."/".$type."_bqsr -o ".
         $type_output."/".$type.".bam > ".$type_output."/".$type."_recal.out");
 
-    unlink_file($type_output."/realigned.bam");
-    unlink_file($type_output."/realigned.bai");
-    unlink_file($type_output."/".$type."_bqsr");
-    unlink_file($type_output."/".$type."_intervals.list");
+      unlink_file($type_output."/realigned.bam");
+      unlink_file($type_output."/realigned.bai");
+      unlink_file($type_output."/".$type."_bqsr");
+      unlink_file($type_output."/".$type."_intervals.list");
+    }else
+    {
+      system("mv ".$type_output."/realigned.bam ".$type_output."/".$type.".bam");
+    }
 
     # further process bam files
     system_call("sambamba index -t ".$thread." ".$type_output."/".$type.".bam");    		
@@ -501,7 +511,7 @@ sub system_call
 #/archive/BICF/shared/Kidney/exome/RAW/SAM9259827_1_2.gne.fastq.gz \
 #/archive/BICF/shared/Kidney/exome/RAW/SAM19944142_1_1.gne.fastq.gz \
 #/archive/BICF/shared/Kidney/exome/RAW/SAM19944142_1_2.gne.fastq.gz \
-#32 hg38 /home2/twang6/data/genomes/hg38/hs38d1.fa \
+#32 hg38 /project/shared/xiao_wang/data/hg38/hs38d1.fa \
 #/cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java \
 #/project/bioinformatics/Xiao_lab/shared/neoantigen/data/tmp/ human 0
 #
@@ -510,6 +520,6 @@ sub system_call
 #/archive/BICF/shared/Kidney/exome/RAW/LIB27355_SAM19944430_36695_R2.fastq.gz \
 #/archive/BICF/shared/Kidney/exome/RAW/LIB27324_SAM19944399_36728_R1.fastq.gz \
 #/archive/BICF/shared/Kidney/exome/RAW/LIB27324_SAM19944399_36728_R2.fastq.gz \
-#32 mm10 /home2/twang6/data/genomes/mm10/mm10.fasta \
+#32 mm10 /project/shared/xiao_wang/data/mm10/mm10.fasta \
 #/cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java \
 #/project/bioinformatics/Xiao_lab/shared/neoantigen/data/tmp mouse 0
