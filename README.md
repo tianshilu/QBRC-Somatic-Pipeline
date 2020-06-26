@@ -47,7 +47,7 @@ The code for somatic and germline mutation calling for a pair of normal and tumo
 
 ### Usage
 ```
-perl /Path/to/somatic.pl <normal_fastq1> <normal_fastq2/NA> <tumor_fastq1> <tumor_fastq2/NA> <thread> <build> <index> <java17> </Path/to/output> <pdx>
+perl /Path/to/somatic.pl <normal_fastq1> <normal_fastq2/NA> <tumor_fastq1> <tumor_fastq2/NA> <thread> <build> <index> <java17> </Path/to/output> <pdx> <disambiguate_pipeline>
 ```
 * fastq files:  
   * fastq1 and fastq2 of normal sample, fastq1 and fastq2 of tumor sample (must be .gz) default input is full path to the 4 fastq files for tumor and normal samples.  
@@ -64,10 +64,11 @@ perl /Path/to/somatic.pl <normal_fastq1> <normal_fastq2/NA> <tumor_fastq1> <tumo
 * output: the output folder, it will be deleted (if pre-existing) and re-created during analysis  
 * pdx: "PDX" or "human" or "mouse"  
 * keep_coverage: whether to keep per-base coverage information. Default is 0. Set to 1 to keep coverage information.
+* disambiguate_pipeline: the directory to disambiguate_pipeline which is for distinguishing human and mouse reads in PDX data.
 
 ### Example:
 ```
-perl ~/somatic/somatic.pl ~/seq/1799-01N.R1.fastq.gz ~/seq/1799-01N.R2.fastq.gz ~/seq/1799-01T.R1.fastq.gz ~/seq/1799-01T.R2.fastq.gz 32 hg38 ~/ref/hg38/hs38d1.fa /cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java ~/somatic_result/1799-01/ human 1
+perl ~/somatic/somatic.pl ~/seq/1799-01N.R1.fastq.gz ~/seq/1799-01N.R2.fastq.gz ~/seq/1799-01T.R1.fastq.gz ~/seq/1799-01T.R2.fastq.gz 32 hg38 ~/ref/hg38/hs38d1.fa /cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java ~/somatic_result/1799-01/ human 1 ~/disambiguate_pipeline
 ```
 ### Note:
 Input seuqencing files:  
@@ -89,7 +90,7 @@ Input seuqencing files:
 Slurm wrapper for somatic.pl for a batch of sampels and it is easy to change for other job scheduler system by revising this line of code: "system("sbatch ".$job)" and using proper demo job submission shell script.
 ### Command
 ```
-perl /Directory/to/folder/of/code/job_somatic.pl design.txt example_file thread build index java17 
+perl /Directory/to/folder/of/code/job_somatic.pl design.txt example_file thread build index java17 disambiguate_pipeline
 ```
 ### somatic_design.txt example 
 (5 columns; columns seperated by tab):
@@ -100,7 +101,7 @@ perl /Directory/to/folder/of/code/job_somatic.pl design.txt example_file thread 
 ```
 ### Command example
 ```
-perl ~/somatic/job_somatic.pl somatic_design.txt ~/somatic/example/example.sh 32 hg38 ~/ref/hg38/hs38d1.fa /cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java 2
+perl ~/somatic/job_somatic.pl somatic_design.txt ~/somatic/example/example.sh 32 hg38 ~/ref/hg38/hs38d1.fa /cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java 0 2 ~/disambiguate_pipeline
 ```
 ### Note:
 * design.txt: the batch job design file. It has 6 columns separated by '\t', the first four slots are fastq files or bam files for normal and tumor samples. The fifth is the output folder, and the last is "PDX" or "human". 
@@ -109,7 +110,10 @@ perl ~/somatic/job_somatic.pl somatic_design.txt ~/somatic/example/example.sh 32
 * build : genome build, hg19 or hg38. 
 * index : path (including file names) to the reference genome in the reference bundle. 
 * java17 : path (including the executable file name) to java 1.7 (needed only for MuTect). 
+* keep_coverage: whether to keep per-base coverage information. Default is 0. Set to 1 to keep coverage information.
 * n : bundle $n somatic calling job into one submission.
+* disambiguate_pipeline: the directory to disambiguate_pipeline
+
 ## filter.R
 Post-processing script for somatic mutations for a batch of sampels.
 ### Usage
