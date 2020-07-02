@@ -1,0 +1,10 @@
+libdir=/home2/s190548/.conda/envs/pdx/lib
+includedir=/home2/s190548/.conda/envs/pdx/include
+
+Name: BamTools
+Description: BamTools is a C++ library for reading and manipulating BAM files
+Version: 2.5.1
+
+Requires.private: zlib
+Libs: -L${libdir} -lbamtools
+Cflags: -I${includedir}
