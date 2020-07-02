@@ -6,14 +6,14 @@
 # jobs: the batch job design file, it has 6 columns separated by \t, the first four are fastq files or bam files (normal+tumor), 
 #       the fifth is the output folder, and the last is "PDX" or "human" or "mouse". Commented lines ("#" at the front) are skipped
 # example: the demo job submission shell script. A default one is in this folder
-# thread,build,index,java17,keep_coverage: follow those in somatic.pl
+# thread,build,index,java17,keep_coverage,disambiguate: follow those in somatic.pl
 # n: bundle $n somatic calling jobs into one submission
 #!/usr/bin/perl
 use strict;
 use warnings;
 use Cwd 'abs_path';
 
-my ($jobs,$example,$thread,$build,$index,$java17,$keep_coverage,$n)=@ARGV;
+my ($jobs,$example,$thread,$build,$index,$java17,$keep_coverage,$n,$disambiguate)=@ARGV;
 my ($line,$line1,@items,$i,$job);
 
 my $path=abs_path($0);
@@ -45,7 +45,8 @@ while ($line=<JOB>)
   # write submission job
   @items=split("\t",$line);
   print SCRIPT "perl ".$path."/somatic.pl ".$items[0]." ".$items[1]." ".$items[2]." ".$items[3].
-    " ".$thread." ".$build." ".$index." ".$java17." ".$items[4]." ".$items[5]." ".$keep_coverage."\n";
+    " ".$thread." ".$build." ".$index." ".$java17." ".$items[4]." ".$items[5]." ".
+    $keep_coverage." ".$disambiguate."\n";
 
   if ($i % $n==0)
   {
@@ -69,7 +70,7 @@ if ($i % $n!=0)
 #design.txt \
 #/project/bioinformatics/Xiao_lab/shared/neoantigen/code/somatic/example/example.sh \
 #32 hg38 \
-#/project/bioinformatics/Xiao_lab/shared/neoantigen/data/hg38/hs38d1.fa \
+#/project/shared/xiao_wang/data/hg38/hs38d1.fa \
 #/cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java \
 #0 2
-
+#/project/shared/xiao_wang/software/disambiguate_pipeline

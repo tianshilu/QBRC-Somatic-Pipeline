@@ -4,12 +4,14 @@
 # Need at least 32GB of memory for DNA jobs and 128GB for RNA jobs
 # Commonly appearing SNVs in the population are filtered out from the somatic output
 # structural variation calling only works for paired-end DNA-seq data with matched normal
+# if inputing bam files, the bam files are assumed to be paired-ended
 #
 # prerequisite in path: 
 # Rscript, bwa (>=0.7.15), STAR (>=2.7.2), sambamba, speedseq, varscan, samtools (>=1.6), shimmer
 # annovar (refGene,ljb26_all,cosmic70,esp6500siv2_all,exac03,1000g2015aug downloaded in humandb and refGene downloaded in mousedb)
-# python (2), strelka (>=2.8.3, note: strelka is tuned to run exome-seq or RNA-seq), manta(>=1.4.0), java (1.8)
+# python (2.7), strelka (>=2.8.3, note: strelka is tuned to run exome-seq or RNA-seq), manta(>=1.4.0), java (1.8)
 # perl (need Parallel::ForkManager), lofreq_star (>=2.1.3), bowtie2 (>=2.3.4.3, for PDX mode)
+# disambiguate (use conda env by Yunguan, contact yunguan.wang@utsouthwestern.edu)
 #
 # input format: 
 # fastq files: (1) fastq1 and fastq2 of normal sample, fastq1 and fastq2 of tumor sample (must be .gz)
@@ -26,10 +28,11 @@
 # thread: number of threads to use. Recommended: 32
 # build: hg19 or hg38 or mm10
 # index: path (including file name) to the human/mouse reference genome
-# java17: path (including the executable file name) to java 1.7 (needed only for mutect)
+# java17: path (including the executable file name) to java 1.7 (needed only for mutect). must be strictly followed
 # output: the output folder, it will be deleted (if pre-existing) and re-created during analysis
-# pdx: "PDX" or "human" or "mouse" 
+# pdx: "PDX" or "human" or "mouse". if "PDX", can only handle paired-end sequencing reads
 # keep_coverage: whether to keep per-base coverage information. Default is 0. Set to 1 to enable
+# disambiguate: disambiguate path, prepared by Yunguan, /project/shared/xiao_wang/software/disambiguate_pipeline
 #
 #!/usr/bin/perl
 use strict;
@@ -40,12 +43,13 @@ use Parallel::ForkManager;
 
 # hidden paramters
 my $lofreq=0; # 1 or 0. For tumor-only mode, use lofreq or strelka
-my $skip_recal=1; # 1 or 0. Skip base recalibration or not
+my $skip_recal=0; # 1 or 0. Skip base recalibration or not
 my $read_ct_max=50000000; # put a cap on how many reads to use, for sake of memory
 
-my ($fastq1_normal,$fastq2_normal,$fastq1_tumor,$fastq2_tumor,$thread,$build,$index,$java17,$output,$pdx,$keep_coverage)=@ARGV;
+my ($fastq1_normal,$fastq2_normal,$fastq1_tumor,$fastq2_tumor,$thread,$build,$index,
+  $java17,$output,$pdx,$keep_coverage,$disambiguate)=@ARGV;
 my ($line0,$line1,$line2,$read_name,$valid,$path,$picard,$mutect,$gatk,$resource,$dict,$locatit,$annovar_path,$rna,$star_index);
-my ($resource_1000g,$resource_mills,$resource_dbsnp,$resource_cosmic,$normal_bam,$tumor_bam,$type,$mouse_ref);
+my ($resource_1000g,$resource_mills,$resource_dbsnp,$resource_cosmic,$normal_bam,$tumor_bam,$type);
 my ($known,$strelka_exome,$zcat,$bam2fastq,$pm,$ppm,$pid,$command,$annovar_db,$annovar_protocol);
 my ($normal_output,$tumor_output,$mutect_tmp,$speed_tmp);
 
@@ -64,7 +68,6 @@ $dict=$index;
 $dict=~s/fa$/dict/;$dict=~s/fasta$/dict/;
 $star_index=$index;
 $star_index=~s/\/[^\/]*?$/\/STAR/;
-$mouse_ref=$index."_mouse/mm10";
 
 $path=abs_path($0);
 $path=~s/somatic\.pl//;
@@ -321,10 +324,18 @@ sub alignment{
     # PDX
     if ($pdx=~/PDX/)
     {
-       system_call("bowtie2 -N 1 --un-conc ".$type_output." -p ".$thread." -x ".$mouse_ref.
-         " -1 ".${$fastq{$type}}[0]." -2 ".${$fastq{$type}}[1]." > /dev/null");
-       system_call("mv ".$type_output."/un-conc-mate.1 ".${$fastq{$type}}[0]);
-       system_call("mv ".$type_output."/un-conc-mate.2 ".${$fastq{$type}}[1]);
+      system_call("source activate ".$disambiguate."/conda_env;".
+        "python ".$disambiguate."/ngs_disambiguate.py -o ".$type_output.
+        " -i ".$type_output."/disambiguate -a bwa -r \"".$index."|".$index."_mouse/mm10.fasta\"".
+        " -n ".$thread." -b ".$path."/somatic_script/bam2fastq.pl ".
+        ${$fastq{$type}}[0]." ".${$fastq{$type}}[1].";source deactivate");
+      system_call("rm -f -r ".$type_output."/alignment_human");
+      system_call("rm -f -r ".$type_output."/alignment_mouse");
+      system_call("rm -f -r ".$type_output."/fastq1.fastq.mouse");
+      system_call("rm -f -r ".$type_output."/fastq2.fastq.mouse");
+      system_call("mv ".$type_output."/fastq1.fastq.human ".${$fastq{$type}}[0]);
+      system_call("mv ".$type_output."/fastq2.fastq.human ".${$fastq{$type}}[1]);
+      system_call("rm -f -r ".$type_output."/disambiguate"); 
     }
 
     # align
@@ -513,7 +524,8 @@ sub system_call
 #/archive/BICF/shared/Kidney/exome/RAW/SAM19944142_1_2.gne.fastq.gz \
 #32 hg38 /project/shared/xiao_wang/data/hg38/hs38d1.fa \
 #/cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java \
-#/project/bioinformatics/Xiao_lab/shared/neoantigen/data/tmp/ human 0
+#/project/bioinformatics/Xiao_lab/shared/neoantigen/data/tmp/ human 0 \
+#/project/shared/xiao_wang/software/disambiguate_pipeline
 #
 #perl /home2/twang6/software/cancer/somatic/somatic.pl \
 #/archive/BICF/shared/Kidney/exome/RAW/LIB27355_SAM19944430_36695_R1.fastq.gz \
@@ -522,4 +534,5 @@ sub system_call
 #/archive/BICF/shared/Kidney/exome/RAW/LIB27324_SAM19944399_36728_R2.fastq.gz \
 #32 mm10 /project/shared/xiao_wang/data/mm10/mm10.fasta \
 #/cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java \
-#/project/bioinformatics/Xiao_lab/shared/neoantigen/data/tmp mouse 0
+#/project/bioinformatics/Xiao_lab/shared/neoantigen/data/tmp mouse 0 \
+#/project/shared/xiao_wang/software/disambiguate_pipeline
