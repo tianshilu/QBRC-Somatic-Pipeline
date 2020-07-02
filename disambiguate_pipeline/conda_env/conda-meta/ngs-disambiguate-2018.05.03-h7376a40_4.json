@@ -1,0 +1,44 @@
+{
+  "arch": "x86_64",
+  "build": "h7376a40_4",
+  "build_number": 4,
+  "channel": "https://conda.anaconda.org/bioconda/linux-64",
+  "constrains": [],
+  "depends": [
+    "bamtools >=2.5.1,<2.5.2.0a0",
+    "libgcc-ng >=7.3.0",
+    "libstdcxx-ng >=7.3.0"
+  ],
+  "extracted_package_dir": "/home2/s190548/.conda/pkgs/ngs-disambiguate-2018.05.03-h7376a40_4",
+  "files": [
+    "bin/ngs_disambiguate"
+  ],
+  "fn": "ngs-disambiguate-2018.05.03-h7376a40_4.tar.bz2",
+  "license": "MIT",
+  "link": {
+    "source": "/home2/s190548/.conda/pkgs/ngs-disambiguate-2018.05.03-h7376a40_4",
+    "type": 1
+  },
+  "md5": "13b149c359f8f31ac5ab3461da479349",
+  "name": "ngs-disambiguate",
+  "package_tarball_full_path": "/home2/s190548/.conda/pkgs/ngs-disambiguate-2018.05.03-h7376a40_4.tar.bz2",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "bin/ngs_disambiguate",
+        "path_type": "hardlink",
+        "sha256": "d7ebaf92aeffe68d51530b3c6c32e11f1f552e0bda744ba9c80e5068dd7d09cb",
+        "sha256_in_prefix": "d7ebaf92aeffe68d51530b3c6c32e11f1f552e0bda744ba9c80e5068dd7d09cb",
+        "size_in_bytes": 251960
+      }
+    ],
+    "paths_version": 1
+  },
+  "platform": "linux",
+  "requested_spec": "ngs-disambiguate",
+  "size": 69215,
+  "subdir": "linux-64",
+  "timestamp": 1572103679795,
+  "url": "https://conda.anaconda.org/bioconda/linux-64/ngs-disambiguate-2018.05.03-h7376a40_4.tar.bz2",
+  "version": "2018.05.03"
+}

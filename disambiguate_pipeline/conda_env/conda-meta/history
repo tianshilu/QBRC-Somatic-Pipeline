@@ -1,0 +1,11 @@
+==> 2020-06-05 13:05:05 <==
+# cmd: /cm/shared/apps/python/3.6.4-anaconda/bin/conda create --name pdx
+==> 2020-06-05 13:08:59 <==
+# cmd: /cm/shared/apps/python/3.6.4-anaconda/bin/conda install ngs-disambiguate
++bioconda::bamtools-2.5.1-he860b03_5
++bioconda::ngs-disambiguate-2018.05.03-h7376a40_4
++defaults::_libgcc_mutex-0.1-main
++defaults::libgcc-ng-9.1.0-hdf63c60_0
++defaults::libstdcxx-ng-9.1.0-hdf63c60_0
++defaults::zlib-1.2.11-h7b6447c_3
+# update specs: ['ngs-disambiguate']

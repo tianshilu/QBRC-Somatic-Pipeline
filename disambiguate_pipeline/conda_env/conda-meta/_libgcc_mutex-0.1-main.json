@@ -1,0 +1,29 @@
+{
+  "arch": "x86_64",
+  "build": "main",
+  "build_number": 0,
+  "channel": "https://repo.continuum.io/pkgs/main/linux-64",
+  "constrains": [],
+  "depends": [],
+  "extracted_package_dir": "/home2/s190548/.conda/pkgs/_libgcc_mutex-0.1-main",
+  "files": [],
+  "fn": "_libgcc_mutex-0.1-main.tar.bz2",
+  "link": {
+    "source": "/home2/s190548/.conda/pkgs/_libgcc_mutex-0.1-main",
+    "type": 1
+  },
+  "md5": "0bb48250a064a019c9dbe8564d865efd",
+  "name": "_libgcc_mutex",
+  "package_tarball_full_path": "/home2/s190548/.conda/pkgs/_libgcc_mutex-0.1-main.tar.bz2",
+  "paths_data": {
+    "paths": [],
+    "paths_version": 1
+  },
+  "platform": "linux",
+  "requested_spec": "None",
+  "size": 3116,
+  "subdir": "linux-64",
+  "timestamp": 1562011674792,
+  "url": "https://repo.continuum.io/pkgs/main/linux-64/_libgcc_mutex-0.1-main.tar.bz2",
+  "version": "0.1"
+}

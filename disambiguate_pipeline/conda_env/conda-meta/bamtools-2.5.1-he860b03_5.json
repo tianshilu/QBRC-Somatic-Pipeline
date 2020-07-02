@@ -1,0 +1,237 @@
+{
+  "arch": "x86_64",
+  "build": "he860b03_5",
+  "build_number": 5,
+  "channel": "https://conda.anaconda.org/bioconda/linux-64",
+  "constrains": [],
+  "depends": [
+    "libgcc-ng >=7.3.0",
+    "libstdcxx-ng >=7.3.0",
+    "zlib >=1.2.11,<1.3.0a0"
+  ],
+  "extracted_package_dir": "/home2/s190548/.conda/pkgs/bamtools-2.5.1-he860b03_5",
+  "files": [
+    "bin/bamtools",
+    "include/bamtools/api/BamAlgorithms.h",
+    "include/bamtools/api/BamAlignment.h",
+    "include/bamtools/api/BamAux.h",
+    "include/bamtools/api/BamConstants.h",
+    "include/bamtools/api/BamIndex.h",
+    "include/bamtools/api/BamMultiReader.h",
+    "include/bamtools/api/BamReader.h",
+    "include/bamtools/api/BamWriter.h",
+    "include/bamtools/api/IBamIODevice.h",
+    "include/bamtools/api/SamConstants.h",
+    "include/bamtools/api/SamHeader.h",
+    "include/bamtools/api/SamProgram.h",
+    "include/bamtools/api/SamProgramChain.h",
+    "include/bamtools/api/SamReadGroup.h",
+    "include/bamtools/api/SamReadGroupDictionary.h",
+    "include/bamtools/api/SamSequence.h",
+    "include/bamtools/api/SamSequenceDictionary.h",
+    "include/bamtools/api/algorithms/Sort.h",
+    "include/bamtools/api/api_global.h",
+    "include/bamtools/shared/bamtools_global.h",
+    "lib/libbamtools.a",
+    "lib/libbamtools.so",
+    "lib/libbamtools.so.2.5.1",
+    "lib/pkgconfig/bamtools-1.pc"
+  ],
+  "fn": "bamtools-2.5.1-he860b03_5.tar.bz2",
+  "license": "MIT",
+  "link": {
+    "source": "/home2/s190548/.conda/pkgs/bamtools-2.5.1-he860b03_5",
+    "type": 1
+  },
+  "md5": "0ce3de32e9bd7f40c7f981d9ed5c12b9",
+  "name": "bamtools",
+  "package_tarball_full_path": "/home2/s190548/.conda/pkgs/bamtools-2.5.1-he860b03_5.tar.bz2",
+  "paths_data": {
+    "paths": [
+      {
+        "_path": "bin/bamtools",
+        "path_type": "hardlink",
+        "sha256": "de789ccfce69692d5641d85e08cebd453ced5aa6f64f6f750bff40928e3de66a",
+        "sha256_in_prefix": "de789ccfce69692d5641d85e08cebd453ced5aa6f64f6f750bff40928e3de66a",
+        "size_in_bytes": 1602856
+      },
+      {
+        "_path": "include/bamtools/api/BamAlgorithms.h",
+        "path_type": "hardlink",
+        "sha256": "b1ce8c1dd2d3df228190281824d65d2911ef1d7be5fc40e93e2b541165a19d87",
+        "sha256_in_prefix": "b1ce8c1dd2d3df228190281824d65d2911ef1d7be5fc40e93e2b541165a19d87",
+        "size_in_bytes": 848
+      },
+      {
+        "_path": "include/bamtools/api/BamAlignment.h",
+        "path_type": "hardlink",
+        "sha256": "9e5324a2f5a959fcbc6f3ded4dee6f768016b49def534b4147b89701a2391c0b",
+        "sha256_in_prefix": "9e5324a2f5a959fcbc6f3ded4dee6f768016b49def534b4147b89701a2391c0b",
+        "size_in_bytes": 22726
+      },
+      {
+        "_path": "include/bamtools/api/BamAux.h",
+        "path_type": "hardlink",
+        "sha256": "71c5363d65dbec40ad9806a03254a5418261025c24e29d594be5829db9517295",
+        "sha256_in_prefix": "71c5363d65dbec40ad9806a03254a5418261025c24e29d594be5829db9517295",
+        "size_in_bytes": 14259
+      },
+      {
+        "_path": "include/bamtools/api/BamConstants.h",
+        "path_type": "hardlink",
+        "sha256": "5a1437ffc80070295616bbdd1d50c58944a0480eaed951476b17f22e7eec7c99",
+        "sha256_in_prefix": "5a1437ffc80070295616bbdd1d50c58944a0480eaed951476b17f22e7eec7c99",
+        "size_in_bytes": 9234
+      },
+      {
+        "_path": "include/bamtools/api/BamIndex.h",
+        "path_type": "hardlink",
+        "sha256": "dadb24a376415b16c812a24e461f002692aa0e2d8d19d87f1b21b2ddba9eede3",
+        "sha256_in_prefix": "dadb24a376415b16c812a24e461f002692aa0e2d8d19d87f1b21b2ddba9eede3",
+        "size_in_bytes": 2754
+      },
+      {
+        "_path": "include/bamtools/api/BamMultiReader.h",
+        "path_type": "hardlink",
+        "sha256": "89a47796499ac43d2d2d31111d878a6a3bf9163802e8e48f850e0485ee192cef",
+        "sha256_in_prefix": "89a47796499ac43d2d2d31111d878a6a3bf9163802e8e48f850e0485ee192cef",
+        "size_in_bytes": 4242
+      },
+      {
+        "_path": "include/bamtools/api/BamReader.h",
+        "path_type": "hardlink",
+        "sha256": "739755c912cd46f9429a80e7475c7803f9c5247def8e598f8223245b87e27d7c",
+        "sha256_in_prefix": "739755c912cd46f9429a80e7475c7803f9c5247def8e598f8223245b87e27d7c",
+        "size_in_bytes": 3780
+      },
+      {
+        "_path": "include/bamtools/api/BamWriter.h",
+        "path_type": "hardlink",
+        "sha256": "0cb975e0683f37da705cc7a11ac866062ec8a07c22b760523df47665e6d1a575",
+        "sha256_in_prefix": "0cb975e0683f37da705cc7a11ac866062ec8a07c22b760523df47665e6d1a575",
+        "size_in_bytes": 1950
+      },
+      {
+        "_path": "include/bamtools/api/IBamIODevice.h",
+        "path_type": "hardlink",
+        "sha256": "cadcb878694911183f43f78d425b6409ecce70ca7bacf888c988130218e42612",
+        "sha256_in_prefix": "cadcb878694911183f43f78d425b6409ecce70ca7bacf888c988130218e42612",
+        "size_in_bytes": 2818
+      },
+      {
+        "_path": "include/bamtools/api/SamConstants.h",
+        "path_type": "hardlink",
+        "sha256": "b0a3671754286ade4ca963c832a7c1b582647f6a3583c3602decd48c18c48fae",
+        "sha256_in_prefix": "b0a3671754286ade4ca963c832a7c1b582647f6a3583c3602decd48c18c48fae",
+        "size_in_bytes": 3491
+      },
+      {
+        "_path": "include/bamtools/api/SamHeader.h",
+        "path_type": "hardlink",
+        "sha256": "b465a3621f57cbd73338acd7ed2789516b3214e1d3cd92ac06a2b478010bd947",
+        "sha256_in_prefix": "b465a3621f57cbd73338acd7ed2789516b3214e1d3cd92ac06a2b478010bd947",
+        "size_in_bytes": 2899
+      },
+      {
+        "_path": "include/bamtools/api/SamProgram.h",
+        "path_type": "hardlink",
+        "sha256": "ff297abcd3819df60c259ef7be2a1cc0cd6f663e71412a36c6fd3e8e2c9c72b4",
+        "sha256_in_prefix": "ff297abcd3819df60c259ef7be2a1cc0cd6f663e71412a36c6fd3e8e2c9c72b4",
+        "size_in_bytes": 2332
+      },
+      {
+        "_path": "include/bamtools/api/SamProgramChain.h",
+        "path_type": "hardlink",
+        "sha256": "66d8ded59569a68ef9dfafaf096a8e11e27ea2381563a269c7c505b7d1bcb3d3",
+        "sha256_in_prefix": "66d8ded59569a68ef9dfafaf096a8e11e27ea2381563a269c7c505b7d1bcb3d3",
+        "size_in_bytes": 2897
+      },
+      {
+        "_path": "include/bamtools/api/SamReadGroup.h",
+        "path_type": "hardlink",
+        "sha256": "7b80a7a8a619c1797e4f51b9be22a89d2d9ba0822bce701ebab5cb2084a414b3",
+        "sha256_in_prefix": "7b80a7a8a619c1797e4f51b9be22a89d2d9ba0822bce701ebab5cb2084a414b3",
+        "size_in_bytes": 3266
+      },
+      {
+        "_path": "include/bamtools/api/SamReadGroupDictionary.h",
+        "path_type": "hardlink",
+        "sha256": "60d323917585ed1716aa50cf88cd106afdd7d9b024f894c83692e046dca3632a",
+        "sha256_in_prefix": "60d323917585ed1716aa50cf88cd106afdd7d9b024f894c83692e046dca3632a",
+        "size_in_bytes": 3083
+      },
+      {
+        "_path": "include/bamtools/api/SamSequence.h",
+        "path_type": "hardlink",
+        "sha256": "84f77068fd0c0cf7a9a55a916c57960ddb79a4da526611fd90e42b41cc985a8b",
+        "sha256_in_prefix": "84f77068fd0c0cf7a9a55a916c57960ddb79a4da526611fd90e42b41cc985a8b",
+        "size_in_bytes": 2570
+      },
+      {
+        "_path": "include/bamtools/api/SamSequenceDictionary.h",
+        "path_type": "hardlink",
+        "sha256": "a2e1641ce5ef77e1d841a59bbe0dc236c7e312134383a750432f0b600622666e",
+        "sha256_in_prefix": "a2e1641ce5ef77e1d841a59bbe0dc236c7e312134383a750432f0b600622666e",
+        "size_in_bytes": 3043
+      },
+      {
+        "_path": "include/bamtools/api/algorithms/Sort.h",
+        "path_type": "hardlink",
+        "sha256": "b2d6f8b13a7026d7b20ab90b94f4f6ead1aa8694eb5cdf3e4b99ed6ce62b73fd",
+        "sha256_in_prefix": "b2d6f8b13a7026d7b20ab90b94f4f6ead1aa8694eb5cdf3e4b99ed6ce62b73fd",
+        "size_in_bytes": 12242
+      },
+      {
+        "_path": "include/bamtools/api/api_global.h",
+        "path_type": "hardlink",
+        "sha256": "2a5f41a0f06e6a8c7358ef1ea4517b12488685673254cac8f2f28aa3c9156032",
+        "sha256_in_prefix": "2a5f41a0f06e6a8c7358ef1ea4517b12488685673254cac8f2f28aa3c9156032",
+        "size_in_bytes": 754
+      },
+      {
+        "_path": "include/bamtools/shared/bamtools_global.h",
+        "path_type": "hardlink",
+        "sha256": "3fc44ef2a79344f68a4e9c494bc7a280665dfc1f06a6f8ee4f813b1106efb5d6",
+        "sha256_in_prefix": "3fc44ef2a79344f68a4e9c494bc7a280665dfc1f06a6f8ee4f813b1106efb5d6",
+        "size_in_bytes": 2346
+      },
+      {
+        "_path": "lib/libbamtools.a",
+        "path_type": "hardlink",
+        "sha256": "6635ffc63eb7c9e4925612da0919f5298d2650e917adf7c547e5ea30d35253b1",
+        "sha256_in_prefix": "6635ffc63eb7c9e4925612da0919f5298d2650e917adf7c547e5ea30d35253b1",
+        "size_in_bytes": 1500918
+      },
+      {
+        "_path": "lib/libbamtools.so",
+        "path_type": "softlink",
+        "sha256": "e4d28e7cf5b2990f97796a03f9838cabefa5358acac2b4d1dc873a4a63d0b5b5",
+        "size_in_bytes": 775720
+      },
+      {
+        "_path": "lib/libbamtools.so.2.5.1",
+        "path_type": "hardlink",
+        "sha256": "e4d28e7cf5b2990f97796a03f9838cabefa5358acac2b4d1dc873a4a63d0b5b5",
+        "sha256_in_prefix": "e4d28e7cf5b2990f97796a03f9838cabefa5358acac2b4d1dc873a4a63d0b5b5",
+        "size_in_bytes": 775720
+      },
+      {
+        "_path": "lib/pkgconfig/bamtools-1.pc",
+        "file_mode": "text",
+        "path_type": "hardlink",
+        "prefix_placeholder": "/opt/anaconda1anaconda2anaconda3",
+        "sha256": "105e22721f5a9668be3a16500b72a2b031ef005d8f523668df809a8231410ee3",
+        "sha256_in_prefix": "a7e3cc025ee8ea040fb350172f87369bdd77710292fa881f1aa0d4179f11ba3e",
+        "size_in_bytes": 282
+      }
+    ],
+    "paths_version": 1
+  },
+  "platform": "linux",
+  "requested_spec": "None",
+  "size": 1118061,
+  "subdir": "linux-64",
+  "timestamp": 1556722812835,
+  "url": "https://conda.anaconda.org/bioconda/linux-64/bamtools-2.5.1-he860b03_5.tar.bz2",
+  "version": "2.5.1"
+}
