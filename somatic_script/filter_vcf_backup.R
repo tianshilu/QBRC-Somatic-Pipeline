@@ -28,7 +28,6 @@ filter_vcf<-function(vcf,caller,type="somatic")
   cat(paste("Filtering",caller,type,"\n"))
   if (dim(vcf)[1]==0) {return(vcf)}
   vcf$V8=caller
-  vcf=vcf[!grepl(",",vcf$V5),]
   vcf=vcf[vcf$V7=="PASS",]
   vcf$V3=vcf$V2+nchar(vcf$V4)-1
   vcf=vcf[vcf$V10!="." & vcf$V11!=".",]
@@ -77,51 +76,48 @@ filter_vcf<-function(vcf,caller,type="somatic")
     vcf$normal_ref=vcf$tumor_ref=total_count-var_count
   }else if (caller=="strelka_snp") 
   {
-    if (dim(vcf)[1]>0)
+    vcf$normal_alt=vcf$tumor_alt=vcf$normal_ref=vcf$tumor_ref=NA
+    for (i in 1:dim(vcf)[1])
     {
-      vcf$normal_alt=vcf$tumor_alt=vcf$normal_ref=vcf$tumor_ref=NA
-      for (i in 1:dim(vcf)[1])
-      {
-        tmp=strsplit(vcf$V10[i],":")[[1]]
-        vcf$normal_ref[i]=as.numeric(sub(".*,","",tmp[fields[[i]]==paste(vcf$V4[i],"U",sep="")]))
-        vcf$normal_alt[i]=as.numeric(sub(".*,","",tmp[fields[[i]]==paste(vcf$V5[i],"U",sep="")]))
-        tmp=strsplit(vcf$V11[i],":")[[1]]
-        vcf$tumor_ref[i]=as.numeric(sub(".*,","",tmp[fields[[i]]==paste(vcf$V4[i],"U",sep="")]))
-        vcf$tumor_alt[i]=as.numeric(sub(".*,","",tmp[fields[[i]]==paste(vcf$V5[i],"U",sep="")]))
-      }
-    }else
-    {
-      vcf$normal_ref=vcf$normal_alt=vcf$tumor_ref=vcf$tumor_alt=numeric(0)
+      tmp=strsplit(vcf$V10[i],":")[[1]]
+      vcf$normal_ref[i]=as.numeric(sub(".*,","",tmp[fields[[i]]==paste(vcf$V4[i],"U",sep="")]))
+      vcf$normal_alt[i]=as.numeric(sub(".*,","",tmp[fields[[i]]==paste(vcf$V5[i],"U",sep="")]))
+      tmp=strsplit(vcf$V11[i],":")[[1]]
+      vcf$tumor_ref[i]=as.numeric(sub(".*,","",tmp[fields[[i]]==paste(vcf$V4[i],"U",sep="")]))
+      vcf$tumor_alt[i]=as.numeric(sub(".*,","",tmp[fields[[i]]==paste(vcf$V5[i],"U",sep="")]))
     }
-  }else if (caller=="strelka_germline")
-  {
-    split_info=strsplit(vcf$V10,":")
-    tmp=t(sapply(1:length(split_info),
-      function(i) as.numeric(strsplit(split_info[[i]][fields[[i]]=="AD"],",")[[1]])))
-    vcf$normal_alt=vcf$tumor_alt=tmp[,2]
-    vcf$normal_ref=vcf$tumor_ref=tmp[,1]
   }
   
   # filter by read count and allele frequency
-  if (type=="tumor_only")
+  vcf=vcf[vcf$normal_ref+vcf$normal_alt>=7,]
+  vcf=vcf[vcf$tumor_alt>=3,]
+  if (type=="somatic")
   {
-    vcf=vcf[vcf$normal_ref+vcf$normal_alt>4,] # make it super sensitive in tumor only mode
-    vcf=vcf[vcf$normal_alt>2,]
+    vcf=vcf[vcf$normal_alt/(vcf$normal_ref+vcf$normal_alt)<
+      vcf$tumor_alt/(vcf$tumor_ref+vcf$tumor_alt)/2,]
+    vcf=vcf[vcf$normal_alt/(vcf$normal_ref+vcf$normal_alt)<0.05,]
   }else
   {
-    vcf=vcf[vcf$normal_ref+vcf$normal_alt>=7,]
-    vcf=vcf[vcf$tumor_alt>=3,]
-    if (type=="somatic")
-    {
-      vcf=vcf[vcf$normal_alt/(vcf$normal_ref+vcf$normal_alt)<
-                vcf$tumor_alt/(vcf$tumor_ref+vcf$tumor_alt)/2,]
-      vcf=vcf[vcf$normal_alt/(vcf$normal_ref+vcf$normal_alt)<0.05,]
-    }else
-    {
-      vcf=vcf[vcf$normal_alt>=3,]
-    } 
+    vcf=vcf[vcf$normal_alt>=3,]
   }
-
+  
+  # break compound het alleles apart
+  if (caller=="speedseq" && sum(grepl(",",vcf$V5))>50000) {return(vcf)}
+  
+  while (any(grepl(",",vcf$V5)))
+  {
+    i=which(grepl(",",vcf$V5))[1]
+    vcf_line=vcf[i,]
+    vcf=vcf[-i,]
+    alt_alleles=strsplit(vcf_line$V5,",")[[1]]
+    for (alt_allele in alt_alleles)
+    {
+      vcf_line_tmp=vcf_line
+      vcf_line_tmp$V5=alt_allele
+      vcf_line_tmp$tumor_alt=vcf_line_tmp$tumor_alt/length(alt_alleles)
+      vcf=rbind(vcf,vcf_line_tmp)
+    }
+  }
   vcf
 }
 
@@ -145,30 +141,17 @@ read_vcf<-function(file)
 
 if (normal=="NA") 
 {
-  if (file.exists("lofreq.vcf"))
-  {
-    lofreq=read_vcf("lofreq.vcf")
-    lofreq$V9=lofreq$V10=lofreq$V11=lofreq$V8
-    lofreq_germline=filter_vcf(lofreq,"lofreq","tumor_only")
-    
-    write.table(lofreq_germline[,c("V1","V2","V3","V4","V5","V8","normal_ref","normal_alt","tumor_ref",
-      "tumor_alt")],file="germline_mutations.txt",col.names=F,row.names=F,sep="\t",quote=F)
-    
-    lofreq_somatic=lofreq_germline[lofreq_germline$tumor_alt/
-      (lofreq_germline$tumor_ref+lofreq_germline$tumor_alt)<0.5,]
-    write.table(lofreq_somatic[,c("V1","V2","V3","V4","V5","V8","normal_ref","normal_alt","tumor_ref",
-      "tumor_alt")],file="somatic_mutations.txt",col.names=F,row.names=F,sep="\t",quote=F)
-  }else
-  {
-    strelka=read_vcf("variants.vcf")
-    strelka$V11=strelka$V10
-    strelka_germline=filter_vcf(strelka,"strelka_germline","tumor_only")
+  lofreq=read_vcf("lofreq.vcf")
+  lofreq$V9=lofreq$V10=lofreq$V11=lofreq$V8
+  lofreq_germline=filter_vcf(lofreq,"lofreq","germline")
 
-    write.table(strelka_germline[,c("V1","V2","V3","V4","V5","V8","normal_ref","normal_alt","tumor_ref",
-      "tumor_alt")],file="germline_mutations.txt",col.names=F,row.names=F,sep="\t",quote=F)
-    write.table(strelka_germline[,c("V1","V2","V3","V4","V5","V8","normal_ref","normal_alt","tumor_ref",
-      "tumor_alt")],file="somatic_mutations.txt",col.names=F,row.names=F,sep="\t",quote=F)
-  }
+  write.table(lofreq_germline[,c("V1","V2","V3","V4","V5","V8","normal_ref","normal_alt","tumor_ref",
+    "tumor_alt")],file="germline_mutations.txt",col.names=F,row.names=F,sep="\t",quote=F)
+  
+  lofreq_somatic=lofreq_germline[lofreq_germline$tumor_alt/
+    (lofreq_germline$tumor_ref+lofreq_germline$tumor_alt)<0.5,]
+  write.table(lofreq_somatic[,c("V1","V2","V3","V4","V5","V8","normal_ref","normal_alt","tumor_ref",
+    "tumor_alt")],file="somatic_mutations.txt",col.names=F,row.names=F,sep="\t",quote=F)
   
   q()
 }
@@ -193,7 +176,7 @@ varscan=rbind(varscan_indel,varscan_snp)
 
 strelka_snp=read_vcf("left_passed.somatic.snvs.vcf")
 strelka_snp=filter_vcf(strelka_snp,"strelka_snp")
-if (dim(strelka_snp)[1]>0) {strelka_snp$V8="strelka"}
+strelka_snp$V8="strelka"
 strelka_indel=read_vcf("left_passed.somatic.indels.vcf")
 if (dim(strelka_indel)[1]>0) {strelka_indel$V7="PASS"}
 strelka_indel=filter_vcf(strelka_indel,"strelka")
@@ -222,10 +205,10 @@ lofreq=lofreq[lofreq$V6>=10,]
 #########  read and process germline vcfs  ###########
 
 # varscan results
-varscan_germline_indel=read_vcf("varscan.indel.Germline.vcf")
-varscan_germline_snp=read_vcf("varscan.snp.Germline.vcf")
-varscan_LOH_indel=read_vcf("varscan.indel.LOH.vcf")
-varscan_LOH_snp=read_vcf("varscan.snp.LOH.vcf")
+varscan_germline_indel=read_vcf("varscan.indel.Germline.hc.vcf")
+varscan_germline_snp=read_vcf("varscan.snp.Germline.hc.vcf")
+varscan_LOH_indel=read_vcf("varscan.indel.LOH.hc.vcf")
+varscan_LOH_snp=read_vcf("varscan.snp.LOH.hc.vcf")
 varscan_germline=rbind(varscan_germline_indel,varscan_germline_snp,varscan_LOH_indel,varscan_LOH_snp)
 varscan_germline=filter_vcf(varscan_germline,"varscan","germline")
 
