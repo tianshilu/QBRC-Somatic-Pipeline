@@ -8,7 +8,7 @@
 #
 # prerequisite in path: 
 # Rscript, bwa (>=0.7.15), STAR (>=2.7.2), sambamba, speedseq, varscan, samtools (>=1.6), shimmer
-# annovar (refGene,ljb26_all,cosmic70,esp6500siv2_all,exac03,1000g2015aug downloaded in humandb and refGene downloaded in mousedb)
+# annovar (>=2019Oct24,refGene,ljb26_all,cosmic70,esp6500siv2_all,exac03,1000g2015aug downloaded in humandb and refGene downloaded in mousedb)
 # python (2.7), strelka (>=2.8.3, note: strelka is tuned to run exome-seq or RNA-seq), manta(>=1.4.0), java (1.8)
 # perl (need Parallel::ForkManager), lofreq_star (>=2.1.3), bowtie2 (>=2.3.4.3, for PDX mode)
 # disambiguate (use conda env by Yunguan, contact yunguan.wang@utsouthwestern.edu)
@@ -381,7 +381,7 @@ sub alignment{
     {
       system_call("samtools view -H ".$type_output."/rgAdded.bam > ".$type_output."/header.sam");
       system_call("java -Xmx15g -jar ".$locatit." -X ".$type_output."/tmp -PM:xm,Q:xq,q:nQ,r:nR,I:ni ".
-        "-U -q 25 -m 1 -IB -OB -C -i -r -c 2500 -H ".$type_output."/header.sam ".
+        "-U -N 800000 -q 25 -m 1 -IB -OB -C -i -r -c 2500 -H ".$type_output."/header.sam ".
         "-o ".$type_output."/locatit.bam ".$type_output."/rgAdded.bam ".${$fastq{$type}}[0]." ".${$fastq{$type}}[1]);
       system_call("sambamba sort --memory-limit=15GB --tmpdir=".$type_output."/tmp -o ".$type_output."/dupmark.bam -t ".$thread.
         " -l 0 -u ".$type_output."/locatit.bam");
