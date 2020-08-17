@@ -3,7 +3,6 @@
 # gridExtra, and gplots R packages
 # best use R>=3.6. Can be executed from Rstudio or Rscript, but not in plain R console
 
-# exclude TG/PDX samples from this analysis
 # strongly recommend NOT to add un-matched mutation calling results to this analysis.
 
 # the first argument is the path to the filter design file 

@@ -4,19 +4,20 @@
 #
 # The instructions must be followed exactly!!! 
 # input format:
-# jobs: the batch job design file, it has 6 columns separated by \t. Commented lines ("#" at the front) are skipped
+# jobs: the batch job design file, it has 7 columns separated by \t. Commented lines ("#" at the front) are skipped
 #       The first four are fastq files or bam files (normal+tumor), 
 #       Next is the somatic mutation calling output file
-#       The last one is the output folder.
+#       Next is the output folder.
+#       Last is "PDX" or "human" or "mouse"
 # example: the demo job submission shell script. A default one is in this folder
-# thread,index: follow those in cnv.pl
+# thread,index,disambiguate: follow those in cnv.pl
 # n: bundle $n CNV calling jobs into one submission
 #!/usr/bin/perl
 use strict;
 use warnings;
 use Cwd 'abs_path';
 
-my ($jobs,$example,$thread,$index,$n)=@ARGV;
+my ($jobs,$example,$thread,$index,$disambiguate,$n)=@ARGV;
 my ($line,$line1,@items,$i,$job);
 
 my $path=abs_path($0);
@@ -48,7 +49,7 @@ while ($line=<JOB>)
   # write submission job
   @items=split("\t",$line);
   print SCRIPT "perl ".$path."/cnv.pl ".$items[0]." ".$items[1]." ".$items[2]." ".$items[3].
-    " ".$thread." ".$index." ".$items[4]." ".$items[5]."\n";
+    " ".$thread." ".$index." ".$items[4]." ".$items[5]." ".$items[6]." ".$disambiguate."\n";
 
   if ($i % $n==0)
   {
@@ -71,6 +72,5 @@ if ($i % $n!=0)
 #perl /home2/twang6/software/cancer/somatic/job_cnv.pl \
 #design.txt \
 #~/example.sh 32 \
-#/home2/twang6/data/genomes/hg38/hs38d1.fa \
-#2
-
+#/project/shared/xiao_wang/data/hg38/hs38d1.fa \
+#/project/shared/xiao_wang/software/disambiguate_pipeline 2

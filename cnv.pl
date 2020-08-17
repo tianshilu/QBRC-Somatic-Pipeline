@@ -3,7 +3,7 @@
 # The instructions must be followed exactly!!! 
 # prerequisite in path: 
 #   R (R.oo and R.utils packages updated to the latest version), bwa, sambamba, perl (need Parallel::ForkManager), 
-#   samtools (>=1.6), cnvkit, fastqc
+#   samtools (>=1.6), cnvkit, fastqc, disambiguate (use conda env by Yunguan, contact yunguan.wang@utsouthwestern.edu)
 # input format: 
 # fastq files: (1) fastq1 and fastq2 of normal sample, fastq1 and fastq2 of tumor sample
 #              default input is full path to the 4 fastq files for tumor and normal samples 
@@ -13,6 +13,8 @@
 # index: path (including file name) to the human or mouse reference genome fasta file
 # somatic: somatic mutation calling output file. This is for adjusting CNV by somatic mutation VAF. Set to 1 to turn off this adjustment
 # output: the output folder, it will be deleted (if pre-existing) and re-created during analysis
+# pdx: "PDX" or "human" or "mouse". if "PDX", can only handle paired-end sequencing reads
+# disambiguate: disambiguate path, prepared by Yunguan, /project/shared/xiao_wang/software/disambiguate_pipeline
 # need at least 128GB of memory
 #!/usr/bin/perl
 use strict;
@@ -24,7 +26,8 @@ use Parallel::ForkManager;
 # hidden paramters
 my $read_ct_max=50000000; 
 
-my ($fastq1_normal,$fastq2_normal,$fastq1_tumor,$fastq2_tumor,$thread,$index,$somatic,$output)=@ARGV;
+my ($fastq1_normal,$fastq2_normal,$fastq1_tumor,$fastq2_tumor,$thread,$index,$somatic,$output,
+  $pdx,$disambiguate)=@ARGV;
 my ($line0,$read_name,$valid,$line1,$line2,$n_line,$picard,%fastq,$path,$normal_bam,$tumor_bam,$type);
 my ($zcat,$bam2fastq,$pm,$ppm,$pid,$command,$normal_output,$tumor_output);
 
@@ -166,6 +169,22 @@ sub alignment{
     system_call("mv ".$type_output."/fastq1.fastq.tmp ".$type_output."/fastq1.fastq");
     system_call("mv ".$type_output."/fastq2.fastq.tmp ".$type_output."/fastq2.fastq");
 
+    if ($pdx=~/PDX/)
+    {
+      system_call("source activate ".$disambiguate."/conda_env;".
+        "python ".$disambiguate."/ngs_disambiguate.py -o ".$type_output.
+        " -i ".$type_output."/disambiguate -a bwa -r \"".$index."|".$index."_mouse/mm10.fasta\"".
+        " -n ".$thread." -b ".$path."/somatic_script/bam2fastq.pl ".
+        ${$fastq{$type}}[0]." ".${$fastq{$type}}[1].";source deactivate");
+      system_call("rm -f -r ".$type_output."/alignment_human");
+      system_call("rm -f -r ".$type_output."/alignment_mouse");
+      system_call("rm -f -r ".$type_output."/fastq1.fastq.mouse");
+      system_call("rm -f -r ".$type_output."/fastq2.fastq.mouse");
+      system_call("mv ".$type_output."/fastq1.fastq.human ".${$fastq{$type}}[0]);
+      system_call("mv ".$type_output."/fastq2.fastq.human ".${$fastq{$type}}[1]);
+      system_call("rm -f -r ".$type_output."/disambiguate");
+    }
+
     # align
     system_call("bwa mem -v 1 -t ".$thread." -a -M ".$index." ".${$fastq{$type}}[0]." ".${$fastq{$type}}[1]." > ".$type_output."/alignment.sam");
     system_call("rm -f ".$type_output."/fastq1.fastq*");
@@ -229,3 +248,4 @@ sub system_call
 #32 /project/shared/xiao_wang/data/hg38/hs38d1.fa \
 #/project/bioinformatics/Xiao_lab/shared/neoantigen/data/somatic/exome_seq/005T/somatic_mutations_hg38.txt \
 #/project/bioinformatics/Xiao_lab/shared/neoantigen/data/tmp2
+#human /project/shared/xiao_wang/software/disambiguate_pipeline

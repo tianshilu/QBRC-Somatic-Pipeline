@@ -1,4 +1,4 @@
-# summarizing results for human CNV calling and quality check metrics
+# summarizing results for CNV calling and quality check metrics
 # you may modify the following codes to suit some special needs
 
 # the first argument is the path to the CNV design file 
