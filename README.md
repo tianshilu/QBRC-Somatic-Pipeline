@@ -50,12 +50,12 @@ The code for somatic and germline mutation calling for a pair of normal and tumo
 perl /Path/to/somatic.pl <normal_fastq1> <normal_fastq2/NA> <tumor_fastq1> <tumor_fastq2/NA> <thread> <build> <index> <java17> </Path/to/output> <pdx> <disambiguate_pipeline>
 ```
 * fastq files:  
-  * fastq1 and fastq2 of normal sample, fastq1 and fastq2 of tumor sample (must be .gz) default input is full path to the 4 fastq files for tumor and normal samples.  
+  * fastq1 and fastq2 of normal control sample, fastq1 and fastq2 of sample of interest (must be .gz) default input is full path to the 4 fastq files for saample of interest and normal control samples.  
   * If need to directly input bam files, use "bam path_to_bam.bam" in replace of the two corresponding fastq input files can be a mixture of fastq and bam input.  
   * If RNA-Seq data are used, use "RNA:fastq1" or "RNA:bam" at the first
   * If Agilent SureSelect (Deep exome sequencing) data, use "Deep:fastq1" at the first or third slot.  
  optional: run somatic_script/SurecallTrimmer.jar on the fastq files before running somatic.pl.  
-  * For tumor-only calling, put "NA NA" in the slots of the normal samples. Results will be written to *germline* files
+  * For tumor-only calling, put "NA NA" in the slots of the normal control samples. Results will be written to *germline* files
   * If only single end fastq data are available, put the fastq file(s) at the first and/or the third slots, then put NA in the second and/or fourth slot.  
 * thread: number of threads to use. Recommended: 32  
 * build: hg19 or hg38 or mm10  
@@ -72,7 +72,7 @@ perl ~/somatic/somatic.pl ~/seq/1799-01N.R1.fastq.gz ~/seq/1799-01N.R2.fastq.gz 
 ```
 ### Note:
 Input seuqencing files:  
-(1) If input are fastq files, they must be 'gz' files. 'sequencing_file_1', 'sequencing_file_2' are path to fastq1 and fastq2 of normal sample; 'sequencing_file_3', 'sequencing_file_4' are path to fastq1 and fastq2 of tumor samples.  
+(1) If input are fastq files, they must be 'gz' files. 'sequencing_file_1', 'sequencing_file_2' are path to fastq1 and fastq2 of control sample; 'sequencing_file_3', 'sequencing_file_4' are path to fastq1 and fastq2 of sample of interest.  
 (2) If input are bam files, use "bam /path/to/bam/files.bam" in replace of the tow corresponding fastq input files.  
 (3) If input are RNA sequencing files, use "RNA:fastq1" or "RNA:bam" at the first or third slot.  
 (4) If input are deep exome sequencing data, use "Deep:fastq1" at the first or third slot.  
@@ -104,7 +104,7 @@ perl /Directory/to/folder/of/code/job_somatic.pl design.txt example_file thread 
 perl ~/somatic/job_somatic.pl somatic_design.txt ~/somatic/example/example.sh 32 hg38 ~/ref/hg38/hs38d1.fa /cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java 0 2 ~/disambiguate_pipeline
 ```
 ### Note:
-* design.txt: the batch job design file. It has 6 columns separated by '\t', the first four slots are fastq files or bam files for normal and tumor samples. The fifth is the output folder, and the last is "PDX" or "human". 
+* design.txt: the batch job design file. It has 6 columns separated by '\t', the first four slots are fastq files or bam files for normal control sample and sample of interest. The fifth is the output folder, and the last is "PDX" or "human". 
 * example_file : the demo job submission shell script. A default one is in example/. 
 * thread : number of threads to use. Recommended: 32 
 * build : genome build, hg19 or hg38. 
@@ -152,8 +152,8 @@ thread index somatic_mutation_result output
 * prerequisite in path: R; BWA; sambamba; perl (Parallel::ForkManager); samtools (version>=1.6); cnvkit; 
 * fastqc Input seuqencing files: 
   * (1) If input are fastq files, they must be 'gz' files. 
-  * 'sequencing_file_1', 'sequencing_file_2' are path to fastq1 and fastq2 of normal sample; 
-  * 'sequencing_file_3', 'sequencing_file_4' are path to fastq1 and fastq2 of tumor samples. 
+  * 'sequencing_file_1', 'sequencing_file_2' are path to fastq1 and fastq2 of normal control sample; 
+  * 'sequencing_file_3', 'sequencing_file_4' are path to fastq1 and fastq2 of sample of interest. 
   * (2) If input are bam files, use "bam /path/to/bam/files.bam" in replace of the tow corresponding fastq input files. 
 * thread : number of threads to use. Recommended: 32 
 * index : the path to the reference genome file in the reference bundle. 
