@@ -11,6 +11,9 @@ options(scipen=999)
 args=commandArgs(trailingOnly = TRUE)
 wd=args[1]
 normal=args[2]
+annovar_path=args[3]
+annovar_db=args[4]
+build=args[5]
 setwd(wd)
 
 ######  define functions  ###########
@@ -30,6 +33,7 @@ filter_vcf<-function(vcf,caller,type="somatic")
   vcf$V8=caller
   vcf=vcf[!grepl(",",vcf$V5),]
   vcf=vcf[vcf$V7=="PASS",]
+  if (dim(vcf)[1]==0) {return(vcf)}
   vcf$V3=vcf$V2+nchar(vcf$V4)-1
   vcf=vcf[vcf$V10!="." & vcf$V11!=".",]
   fields=strsplit(vcf$V9,":")
@@ -164,6 +168,7 @@ if (normal=="NA")
     strelka$V11=strelka$V10
     strelka_germline=filter_vcf(strelka,"strelka_germline","tumor_only")
 
+    if (dim(strelka_germline)[1]==0) {stop("No mutations called for strelka_germline!")}
     write.table(strelka_germline[,c("V1","V2","V3","V4","V5","V8","normal_ref","normal_alt","tumor_ref",
       "tumor_alt")],file="germline_mutations.txt",col.names=F,row.names=F,sep="\t",quote=F)
     write.table(strelka_germline[,c("V1","V2","V3","V4","V5","V8","normal_ref","normal_alt","tumor_ref",
@@ -256,8 +261,29 @@ vcf$ref=sapply(strsplit(vcf$Group.1," "),function(x) x[3])
 vcf$alt=sapply(strsplit(vcf$Group.1," "),function(x) x[4])
 vcf$pos2=vcf$pos+nchar(vcf$ref)-1
 
+# for human mutation calling, if a mutation is (sort of) found in cosmic,
+# it will be also counted as "found by another caller"
+if (grepl("humandb",annovar_db))
+{
+  cosmic_path=paste(annovar_path,"/",annovar_db,"/",sep="") 
+  files=list.files(cosmic_path,pattern="cosmic")
+  files=files[grepl(build,files)]
+  file=files[!grepl("idx",files)]
+
+  cosmic=read.table(paste(cosmic_path,"/",file,sep=""),stringsAsFactors=F)
+  cosmic$V1=paste("chr",cosmic$V1,sep="")
+  cosmic$type="sub"
+  cosmic$type[cosmic$V4=="-"]="ins"
+  cosmic$type[cosmic$V5=="-"]="del"
+  
+  type=rep("sub",dim(vcf)[1])
+  type[nchar(vcf$ref)>nchar(vcf$alt)]="del"
+  type[nchar(vcf$ref)<nchar(vcf$alt)]="ins"
+  found=paste(vcf$chr,vcf$pos,type) %in% paste(cosmic$V1,cosmic$V2,cosmic$type)
+  vcf$x[found]=paste(vcf$x[found],",cosmic",sep="")
+}
+
 # important! A variant must have been found by >=3 caller
 vcf=vcf[grepl(",.*,",vcf$x),] 
-
 vcf=vcf[,c("chr","pos","pos2","ref","alt","x","normal_ref","normal_alt","tumor_ref","tumor_alt")]
 write.table(vcf,file="somatic_mutations.txt",col.names = F,row.names = F,sep="\t",quote=F)

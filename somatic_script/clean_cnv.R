@@ -12,6 +12,8 @@ somatic=args[3]
 output=args[4]
 
 cns=read.table(cns_file,stringsAsFactors = F,header=T)
+cns$weight=log(cns$weight+1)
+
 refFlat=read.table(refFlat,stringsAsFactors = F)
 all_genes=unique(refFlat[,1])
 
@@ -21,13 +23,13 @@ cnv_gene=data.frame(gene=all_genes,cnv=0,count=0)
 for (i in 1:dim(cns)[1])
 {
   keep=cnv_gene$gene %in% strsplit(cns$gene[i],",")[[1]]
-  cnv_gene$cnv[keep]=cnv_gene$cnv[keep]+cns$log2[i]
-  cnv_gene$count[keep]=cnv_gene$count[keep]+1
+  cnv_gene$cnv[keep]=cnv_gene$cnv[keep]+cns$log2[i]*cns$weight[i]
+  cnv_gene$count[keep]=cnv_gene$count[keep]+cns$weight[i]
 }
 
 ########  normalize  ###############
 
-cnv_gene$cnv=cnv_gene$cnv/cnv_gene$count
+cnv_gene$cnv=cnv_gene$cnv/cnv_gene$count # weighted average
 cnv_gene$cnv=cnv_gene$cnv-median(cnv_gene$cnv,na.rm = T)
 cnv_gene$cnv[is.na(cnv_gene$cnv)]=0
 cnv_gene$cnv=2^(cnv_gene$cnv)*2

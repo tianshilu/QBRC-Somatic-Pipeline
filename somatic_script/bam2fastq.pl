@@ -105,9 +105,9 @@ close(FILE_IN2);
 # error checking
 if ($count<10000)
 {
-  print "Error: too few reads written!\n";
-  unlink($output."/fastq1.fastq");
-  unlink($output."/fastq2.fastq");
+  print "Warning: too few reads written!\n";
+#  unlink($output."/fastq1.fastq");
+#  unlink($output."/fastq2.fastq");
 }
 
 # clean up
