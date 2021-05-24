@@ -18,5 +18,22 @@ Updates:
 01/09/2019: Included COSMIC consensus gene annotation in the mutation summary tables
 01/28/2019: Fixed the protein sequence annotation issue 
 03/31/2019: Added the evolution.pl script
-04/05/2019: Added the $debug hidden parameter
 04/15/2019: Added handling of single end sequencing data
+04/21/2019: Added lofreq results to germline mutation calling
+04/24/2019: Changed tumor-only mutation calling to a mode that is super sensitive but not specific
+07/10/2019: Only somatic mutation results will be filtered by population frequency
+07/18/2019: For tumor-only calling, now switched to strelka
+08/08/2019: Some adjustments were made to reduce the hard disk footprint of the pipeline
+08/19/2019: Added "--outFilterMatchNminOverLread 0.4 --outFilterScoreMinOverLread 0.4" to STAR alignment parameters
+08/27/2019: Added another option to decide whether to keep per-base coverage information
+05/27/2020: Added a hidden parameter to control for the maximum number of reads to read in the cnv calling
+06/22/2020: Switched to disambiguate.py for disambiguating human and mouse reads for PDX samples
+07/24/2020: Added handling of PDX samples to the cnv.pl pipeline
+08/25/2020: With the updated Annovar version, protein annotation correction is no longer needed
+11/18/2020: Changed to weighted average when calculating CNV from tumor.cns files
+11/19/2020: Now the disambiguate pipeline will only process the tumor, not the normal sample
+02/05/2021: Switched from manta/1.4 to manta/1.6
+03/10/2021: If a mutation is found by >=3 software, or (>=2 software + cosmic), it will be kept. 
+03/19/2021: Now intermediate files for varscan germline mutation calling will be kept
+04/09/2021: Removed the quality check of the mpileup files for low read counts, as amplicon sequencing data normally have low read counts
+04/12/2021: Added error handling for strelka_germline when no valid mutations are called
