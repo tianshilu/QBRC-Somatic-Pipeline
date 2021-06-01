@@ -3,22 +3,21 @@
 # The instructions must be followed exactly!!! 
 # Need at least 32GB of memory for DNA jobs and 128GB for RNA jobs
 # Commonly appearing SNVs in the population are filtered out from the somatic output
-# structural variation calling only works for paired-end DNA-seq data with matched normal
 # if inputing bam files, the bam files are assumed to be paired-ended
 #
 # prerequisite in path: 
 # Rscript, bwa (>=0.7.15), STAR (>=2.7.2), sambamba, speedseq, varscan, samtools (>=1.6), shimmer
 # annovar (>=2019Oct24,refGene,ljb26_all,cosmic70,esp6500siv2_all,exac03,1000g2015aug downloaded in humandb and refGene downloaded in mousedb)
-# python (2.7), strelka (>=2.8.3, note: strelka is tuned to run exome-seq or RNA-seq), manta(>=1.4.0), java (1.8)
+# python (2.7), strelka (>=2.8.3, note: strelka is tuned to run exome-seq or RNA-seq), manta(>=1.6.0), java (1.8)
 # perl (need Parallel::ForkManager), lofreq_star (>=2.1.3), bowtie2 (>=2.3.4.3, for PDX mode)
-# disambiguate (use conda env by Yunguan, contact yunguan.wang@utsouthwestern.edu)
+# disambiguate (use conda env or install by the corresponding env.yml, conda env create -f environment.yml)
 #
 # input format: 
 # fastq files: (1) fastq1 and fastq2 of normal sample, fastq1 and fastq2 of tumor sample (must be .gz)
 #                  default input is full path to the 4 fastq files for tumor and normal samples 
 #              (2) if need to directly input bam files, use "bam path_to_bam.bam" in replace of the two corresponding fastq input files
 #                  can be a mixture of fastq and bam input
-#              (3) if RNA-Seq data are used, use "RNA:fastq1" or "RNA:bam" at the first or third slot
+#              (3) if RNA-Seq data are used, use "RNA:fastq" or "RNA:bam" at the first or third slot
 #              (4) if Agilent SureSelect (Deep exome sequencing) data, use "Deep:fastq1" at the first or third slot
 #                  optional: run somatic_script/SurecallTrimmer.jar on the fastq files before running somatic.pl
 #              (5) for tumor-only calling, put "NA NA" in the slots of the normal samples. Results will be written to *germline* files
@@ -30,9 +29,9 @@
 # index: path (including file name) to the human/mouse reference genome
 # java17: path (including the executable file name) to java 1.7 (needed only for mutect). must be strictly followed
 # output: the output folder, it will be deleted (if pre-existing) and re-created during analysis
-# pdx: "PDX" or "human" or "mouse". if "PDX", can only handle paired-end sequencing reads
+# pdx: "PDX" or "human" or "mouse". if "PDX", the tumor (not normal) sample will be processed by disambiguate. But it can only handle paired-end sequencing reads
 # keep_coverage: whether to keep per-base coverage information. Default is 0. Set to 1 to enable
-# disambiguate: disambiguate path, prepared by Yunguan, /project/shared/xiao_wang/software/disambiguate_pipeline
+# disambiguate: disambiguate path, /project/shared/xiao_wang/software/disambiguate_pipeline. or install your own version by env.yml
 #
 #!/usr/bin/perl
 use strict;
@@ -42,7 +41,7 @@ use File::Copy;
 use Parallel::ForkManager;
 
 # hidden paramters
-my $lofreq=0; # 1 or 0. For tumor-only mode, use lofreq or strelka
+my $lofreq=1; # 1 or 0. For tumor-only mode, use lofreq or strelka. For targeted panel sequencing, lofreq=1 is strongly suggested
 my $skip_recal=0; # 1 or 0. Skip base recalibration or not
 my $read_ct_max=50000000; # put a cap on how many reads to use, for sake of memory
 
@@ -168,10 +167,12 @@ if (${$fastq{"normal"}}[0] ne "NA")
   $ppm->wait_all_children;
 }
 
-# filter vcfs
-system_call("Rscript ".$path."/somatic_script/filter_vcf.R ".$output." ".${$fastq{"normal"}}[0]);
+system_call("cp ".$output."/varscan.indel.Germline.vcf ".$output."/intermediate/");
+system_call("cp ".$output."/varscan.snp.Germline.vcf ".$output."/intermediate/");
+system_call("cp ".$output."/varscan.indel.LOH.vcf ".$output."/intermediate/");
+system_call("cp ".$output."/varscan.snp.LOH.vcf ".$output."/intermediate/");
 
-# annovar
+# filter vcfs
 open(AV,"which table_annovar.pl |") or die "Cannot call table_annovar.pl!\n";
 $annovar_path=<AV>;
 close(AV);
@@ -187,6 +188,10 @@ if ($pdx=~/mouse/)
   $annovar_protocol=" -protocol refGene,ljb26_all,cosmic70,esp6500siv2_all,exac03,1000g2015aug_all -operation g,f,f,f,f,f ";
 }
 
+system_call("Rscript ".$path."/somatic_script/filter_vcf.R ".$output." ".${$fastq{"normal"}}[0].
+  " ".$annovar_path." ".$annovar_db." ".$build);
+
+# annovar
 foreach $type (("germline","somatic"))
 {
   system_call("table_annovar.pl ".$output."/".$type."_mutations.txt ".$annovar_path.$annovar_db." -buildver ".$build." -out ".$output.
@@ -195,12 +200,6 @@ foreach $type (("germline","somatic"))
     $build."_multianno.txt ".$output."/".$type."_mutations_".$build.".txt ".$type);
   unlink($output."/".$type."_mutations.txt");
   unlink($output."/".$type."_mutations.".$build."_multianno.txt");
-
-  system_call("annotate_variation.pl -geneanno -dbtype refGene -buildver ".$build." ".$output."/".$type."_mutations_".$build.".txt ".$annovar_path.$annovar_db);
-  system_call("coding_change.pl --includesnp --alltranscript --newevf ".$output."/".$type."_mutations_".$build.".txt_tmp.txt ".$output."/".$type."_mutations_".$build.".txt".
-    ".exonic_variant_function ".$annovar_path.$annovar_db."/".$build."_refGene.txt ".$annovar_path.$annovar_db."/".$build."_refGeneMrna.fa >/dev/null 2>/dev/null");
-  system_call("Rscript ".$path."/somatic_script/add_fs_annotation.R ".$output." ".$build." ".$type);
-  system_call("rm -f ".$output."/".$type."_mutations_".$build.".txt?*");
 }
 
 # sv
@@ -322,7 +321,7 @@ sub alignment{
     }
 
     # PDX
-    if ($pdx=~/PDX/)
+    if ($pdx=~/PDX/ && $type eq "tumor")
     {
       system_call("source activate ".$disambiguate."/conda_env;".
         "python ".$disambiguate."/ngs_disambiguate.py -o ".$type_output.
@@ -441,7 +440,6 @@ sub alignment{
     #system_call("sambamba mpileup --tmpdir ".$type_output."/tmp -t ".$thread." --buffer-size=16000000000 ".		
     #  $type_output."/".$type.".bam --samtools \"-C 50 -f ".$index."\" > ".$type_output."/".$type.".mpileup");		
     system_call("samtools mpileup -d 7000 -I -f ".$index." ".$type_output."/".$type.".bam > ".$type_output."/".$type.".mpileup");
-    if (-s $type_output."/".$type.".mpileup"<100000) {die "Error: mpileup has failed!\n";}		
 }		
 
 sub fun_mutect{
@@ -524,7 +522,7 @@ sub system_call
 #/archive/BICF/shared/Kidney/exome/RAW/SAM19944142_1_2.gne.fastq.gz \
 #32 hg38 /project/shared/xiao_wang/data/hg38/hs38d1.fa \
 #/cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java \
-#/project/bioinformatics/Xiao_lab/shared/neoantigen/data/tmp/ human 0 \
+#/project/DPDS/Xiao_lab/shared/neoantigen/data/tmp/ human 0 \
 #/project/shared/xiao_wang/software/disambiguate_pipeline
 #
 #perl /home2/twang6/software/cancer/somatic/somatic.pl \
@@ -534,5 +532,5 @@ sub system_call
 #/archive/BICF/shared/Kidney/exome/RAW/LIB27324_SAM19944399_36728_R2.fastq.gz \
 #32 mm10 /project/shared/xiao_wang/data/mm10/mm10.fasta \
 #/cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java \
-#/project/bioinformatics/Xiao_lab/shared/neoantigen/data/tmp mouse 0 \
+#/project/DPDS/Xiao_lab/shared/neoantigen/data/tmp mouse 0 \
 #/project/shared/xiao_wang/software/disambiguate_pipeline
