@@ -6,8 +6,9 @@
 # jobs: the batch job design file, it has 6 columns separated by \t, the first four are fastq files or bam files (normal+tumor), 
 #       the fifth is the output folder, and the last is "PDX" or "human" or "mouse". Commented lines ("#" at the front) are skipped
 # example: the demo job submission shell script. A default one is in this folder
-# thread,build,index,java17,keep_coverage,disambiguate: follow those in somatic.pl
+# thread,build,index,java17,keep_coverage: follow those in somatic.pl
 # n: bundle $n somatic calling jobs into one submission
+# disambiguate: follow those in somatic.pl
 #!/usr/bin/perl
 use strict;
 use warnings;
@@ -68,9 +69,9 @@ if ($i % $n!=0)
 
 #perl /home2/twang6/software/cancer/somatic/job_somatic.pl \
 #design.txt \
-#/project/bioinformatics/Xiao_lab/shared/neoantigen/code/somatic/example/example.sh \
+#/project/DPDS/Xiao_lab/shared/neoantigen/code/somatic/example/example.sh \
 #32 hg38 \
 #/project/shared/xiao_wang/data/hg38/hs38d1.fa \
 #/cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java \
-#0 2
-#/project/shared/xiao_wang/software/disambiguate_pipeline
+#0 2 \
+#/project/shared/xiao_wang/software/disambiguate_pipeline \
