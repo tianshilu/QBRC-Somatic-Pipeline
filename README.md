@@ -28,7 +28,7 @@ manta (version >=1.4.0)
 java (version 1.8)  
 perl (Parallel::ForkManager)  
 lofreq_star (version >=2.1.3, for tumor-only calling)  
-bowtie2 (version>= 2.3.4.3, for Patient Derived Xenograft models)
+bowtie2 (version>= 2.3.4.3, for Patient Derived Xenograft models) \
 picard.jar (please download the file https://drive.google.com/file/d/1lL_vUgrY6VAtjG87bf9PXgYubuYd-st2/view?usp=sharing and place it under the folder named "somatic_script" before running the pipeline)
 
 ## Input files
