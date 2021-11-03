@@ -12,7 +12,7 @@
 # Rscript plot_cnv.R ./example/cnv_design.txt ./example/cnv.pdf /home2/twang6/data/genomes/hg38/
 
 #########  prepare  ################
-
+args = commandArgs(trailingOnly = TRUE)
 design=read.table(args[1],stringsAsFactors = F,header=T)
 
 chrom_size_file=list.files(args[3],pattern="chrom.sizes.txt",full.names = T)
