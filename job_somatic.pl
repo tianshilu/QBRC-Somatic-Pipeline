@@ -45,9 +45,11 @@ while ($line=<JOB>)
 
   # write submission job
   @items=split("\t",$line);
+  system("rm -f -r ".$items[4]);
+  system("mkdir ".$items[4]);
   print SCRIPT "perl ".$path."/somatic.pl ".$items[0]." ".$items[1]." ".$items[2]." ".$items[3].
     " ".$thread." ".$build." ".$index." ".$java17." ".$items[4]." ".$items[5]." ".
-    $keep_coverage." ".$disambiguate."\n";
+    $keep_coverage." ".$disambiguate." 2> ".$items[4]."/job_error.txt 1> ".$items[4]."/job_output.txt\n";
 
   if ($i % $n==0)
   {
@@ -74,4 +76,4 @@ if ($i % $n!=0)
 #/project/shared/xiao_wang/data/hg38/hs38d1.fa \
 #/cm/shared/apps/java/oracle/jdk1.7.0_51/bin/java \
 #0 2 \
-#/project/shared/xiao_wang/software/disambiguate_pipeline \
+#/project/shared/xiao_wang/software/disambiguate_pipeline

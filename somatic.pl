@@ -6,7 +6,7 @@
 # if inputing bam files, the bam files are assumed to be paired-ended
 #
 # prerequisite in path: 
-# Rscript, bwa (>=0.7.15), STAR (>=2.7.2), sambamba, speedseq, varscan, samtools (>=1.6), shimmer
+# Rscript/R (>=4.0.2), bwa (>=0.7.15), STAR (>=2.7.2), sambamba, speedseq, varscan, samtools (>=1.6), shimmer
 # annovar (>=2019Oct24,refGene,ljb26_all,cosmic70,esp6500siv2_all,exac03,1000g2015aug downloaded in humandb and refGene downloaded in mousedb)
 # python (2.7), strelka (>=2.8.3, note: strelka is tuned to run exome-seq or RNA-seq), manta(>=1.6.0), java (1.8)
 # perl (need Parallel::ForkManager), lofreq_star (>=2.1.3), bowtie2 (>=2.3.4.3, for PDX mode)
@@ -50,7 +50,7 @@ my ($fastq1_normal,$fastq2_normal,$fastq1_tumor,$fastq2_tumor,$thread,$build,$in
 my ($line0,$line1,$line2,$read_name,$valid,$path,$picard,$mutect,$gatk,$resource,$dict,$locatit,$annovar_path,$rna,$star_index);
 my ($resource_1000g,$resource_mills,$resource_dbsnp,$resource_cosmic,$normal_bam,$tumor_bam,$type);
 my ($known,$strelka_exome,$zcat,$bam2fastq,$pm,$ppm,$pid,$command,$annovar_db,$annovar_protocol);
-my ($normal_output,$tumor_output,$mutect_tmp,$speed_tmp);
+my ($picard_sort,$normal_output,$tumor_output,$mutect_tmp,$speed_tmp);
 
 my $manta="";
 my @command_array=("fun_mutect();","fun_speed_var_shimmer();","fun_strelka_lofreq();");
@@ -61,6 +61,8 @@ my %vcfs=("passed.somatic.indels.vcf"=>"strelka","passed.somatic.snvs.vcf"=>"str
 my %fastq=("tumor"=>[$fastq1_tumor,$fastq2_tumor],"normal"=>[$fastq1_normal,$fastq2_normal]);
 
 ##############################  path of files  ###############################
+
+if (! -d $output) {system_call("mkdir ".$output);}
 
 $resource=$index."_resource";
 $dict=$index;
@@ -91,8 +93,6 @@ $mutect_tmp=$output."/mutmp";
 $speed_tmp=$output."/sptmp";
 
 system("date");
-system_call("rm -f -r ".$output);
-system_call("mkdir ".$output);
 system_call("mkdir ".$output."/intermediate");
 if (!-w $output) {die "Error: directory ".$output." is not writable!\n";}
 system_call("mkdir ".$normal_output);
@@ -362,8 +362,9 @@ sub alignment{
     }
 
     #add read group
+    if ($rna==2) {$picard_sort=""} else {$picard_sort="SORT_ORDER=coordinate"}
     system_call("java -Djava.io.tmpdir=".$type_output."/tmp -jar ".$picard." AddOrReplaceReadGroups INPUT=".$type_output."/alignment.sam OUTPUT=".
-        $type_output."/rgAdded.bam SORT_ORDER=coordinate RGID=".$type." RGLB=".$type." RGPL=illumina RGPU=".$type." RGSM=".$type.
+        $type_output."/rgAdded.bam ".$picard_sort." RGID=".$type." RGLB=".$type." RGPL=illumina RGPU=".$type." RGSM=".$type.
         " CREATE_INDEX=true VALIDATION_STRINGENCY=LENIENT");
     unlink_file($type_output."/alignment.sam");
 
@@ -392,7 +393,7 @@ sub alignment{
     system_call("rm -f ".$type_output."/fastq1.fastq*");
     system_call("rm -f ".$type_output."/fastq2.fastq*");
     unlink_file($type_output."/rgAdded.bam");
-    unlink_file($type_output."/rgAdded.bai");
+    if ($rna!=2) {unlink_file($type_output."/rgAdded.bai");}
 
     if ($rna==1)
     {
@@ -484,7 +485,7 @@ sub fun_strelka_lofreq{
   # run strelka2
   system_call("configureStrelkaSomaticWorkflow.py --normalBam ".$normal_bam." --tumorBam ".$tumor_bam." --referenceFasta ".$index.
     " --runDir ".$output."/strelka ".$strelka_exome." ".$manta);
-  system_call($output."/strelka/runWorkflow.py -m local -j ".$thread);
+  system_call($output."/strelka/runWorkflow.py -m local -g 16 -j ".$thread);
   system_call("gzip -d ".$output."/strelka/results/variants/*gz");
   system_call("mv ".$output."/strelka/results/variants/somatic.indels.vcf ".$output."/passed.somatic.indels.vcf"); # legacy codes
   system_call("mv ".$output."/strelka/results/variants/somatic.snvs.vcf ".$output."/passed.somatic.snvs.vcf"); # legacy codes
