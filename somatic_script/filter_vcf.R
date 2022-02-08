@@ -133,11 +133,20 @@ read_vcf<-function(file)
 {
   cat(paste("Reading",file,"\n"))
   x=tryCatch({
-    read.table(file,stringsAsFactors = F,
-      colClasses=c("character","numeric","character","character","character","character","character",
-                   "character","character","character","character"))
-                   # #CHROM        POS     ID                 REF     ALT       QUAL         FILTER 
-                   #  INFO    FORMAT  normal  tumor
+    if (grepl("lofreq",file))
+    {
+      read.table(file,stringsAsFactors = F,
+                 colClasses=c("character","numeric","character","character","character","character","character",
+                              "character"))
+      # #CHROM        POS     ID                 REF     ALT       QUAL         FILTER INFO    
+    }else
+    {
+      read.table(file,stringsAsFactors = F,
+                 colClasses=c("character","numeric","character","character","character","character","character",
+                              "character","character","character","character"))
+      # #CHROM        POS     ID                 REF     ALT       QUAL         FILTER 
+      #  INFO    FORMAT  normal  tumor
+    }
   }, error = function(e) { # give an empty VCF file
     cat(paste("Warning: failed to read",file,
               ". Maybe this caller didn't find any variants\n"))
